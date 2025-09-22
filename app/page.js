@@ -16,6 +16,7 @@ export default function TriTechAssistant() {
   const [forceMode, setForceMode] = useState('local'); // 'local', 'ai'
   const [selectedProduct, setSelectedProduct] = useState('Premium');
   const [apiStatus, setApiStatus] = useState('checking');
+  const [isDarkMode, setIsDarkMode] = useState(true); // Theme state
   const messagesEndRef = useRef(null);
 
   const products = {
@@ -56,6 +57,36 @@ export default function TriTechAssistant() {
       ]
     }
   };
+
+  // Theme colors
+  const theme = {
+    dark: {
+      bg: '#0f172a',
+      cardBg: '#1e293b',
+      border: '#334155',
+      text: 'white',
+      textSecondary: '#94a3b8',
+      textMuted: '#64748b',
+      buttonBg: '#374151',
+      buttonHover: '#4a5568',
+      inputBg: '#374151',
+      inputBorder: '#4a5568'
+    },
+    light: {
+      bg: '#f8fafc',
+      cardBg: 'white',
+      border: '#e2e8f0',
+      text: '#1e293b',
+      textSecondary: '#475569',
+      textMuted: '#64748b',
+      buttonBg: '#f1f5f9',
+      buttonHover: '#e2e8f0',
+      inputBg: 'white',
+      inputBorder: '#d1d5db'
+    }
+  };
+
+  const currentTheme = isDarkMode ? theme.dark : theme.light;
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -170,21 +201,21 @@ export default function TriTechAssistant() {
     cursor: 'pointer',
     fontSize: '13px',
     fontWeight: '500',
-    backgroundColor: forceMode === mode ? '#3b82f6' : '#374151',
-    color: 'white',
+    backgroundColor: forceMode === mode ? '#3b82f6' : currentTheme.buttonBg,
+    color: forceMode === mode ? 'white' : currentTheme.text,
     transition: 'all 0.2s ease',
     minWidth: '80px'
   });
 
   const getProductButtonStyle = (productKey) => ({
     padding: '12px 16px',
-    backgroundColor: selectedProduct === productKey ? '#3b82f6' : '#374151',
-    border: selectedProduct === productKey ? '2px solid #60a5fa' : '1px solid #4a5568',
+    backgroundColor: selectedProduct === productKey ? '#3b82f6' : currentTheme.buttonBg,
+    border: selectedProduct === productKey ? '2px solid #60a5fa' : `1px solid ${currentTheme.border}`,
     borderRadius: '8px',
     cursor: 'pointer',
     transition: 'all 0.2s ease',
     textAlign: 'center',
-    color: 'white',
+    color: selectedProduct === productKey ? 'white' : currentTheme.text,
     fontSize: '13px'
   });
 
@@ -192,16 +223,16 @@ export default function TriTechAssistant() {
     <div style={{ 
       display: 'flex',
       height: '100vh', 
-      backgroundColor: '#0f172a', 
-      color: 'white',
+      backgroundColor: currentTheme.bg, 
+      color: currentTheme.text,
       fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
     }}>
       
       {/* Left Sidebar - Always Visible */}
       <div style={{ 
         width: '320px',
-        backgroundColor: '#1e293b',
-        borderRight: '1px solid #334155',
+        backgroundColor: currentTheme.cardBg,
+        borderRight: `1px solid ${currentTheme.border}`,
         display: 'flex',
         flexDirection: 'column',
         overflow: 'auto'
@@ -210,7 +241,7 @@ export default function TriTechAssistant() {
         {/* Header */}
         <div style={{ 
           padding: '20px',
-          borderBottom: '1px solid #334155',
+          borderBottom: `1px solid ${currentTheme.border}`,
           textAlign: 'center'
         }}>
           <h1 style={{ 
@@ -226,11 +257,36 @@ export default function TriTechAssistant() {
           </h1>
           <p style={{ 
             fontSize: '12px', 
-            color: '#94a3b8', 
+            color: currentTheme.textSecondary, 
             margin: '0 0 12px 0' 
           }}>
             AI-Powered Enterprise Analysis
           </p>
+          
+          {/* Theme Toggle */}
+          <div style={{ 
+            display: 'flex', 
+            justifyContent: 'center', 
+            marginBottom: '12px' 
+          }}>
+            <button
+              onClick={() => setIsDarkMode(!isDarkMode)}
+              style={{
+                padding: '6px 12px',
+                borderRadius: '20px',
+                border: `1px solid ${currentTheme.border}`,
+                backgroundColor: currentTheme.buttonBg,
+                color: currentTheme.text,
+                fontSize: '12px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px'
+              }}
+            >
+              {isDarkMode ? '☀️ Light' : '🌙 Dark'}
+            </button>
+          </div>
           
           {/* Status Badge */}
           <div style={{ 
@@ -240,19 +296,20 @@ export default function TriTechAssistant() {
             backgroundColor: apiStatus === 'ready' ? '#10b981' : '#d97706', 
             borderRadius: '16px', 
             fontSize: '11px', 
-            fontWeight: '500'
+            fontWeight: '500',
+            color: 'white'
           }}>
             {apiStatus === 'ready' ? '✅ Hybrid AI Ready' : '⚡ Local Mode Only'}
           </div>
         </div>
 
         {/* Product Selection */}
-        <div style={{ padding: '20px', borderBottom: '1px solid #334155' }}>
+        <div style={{ padding: '20px', borderBottom: `1px solid ${currentTheme.border}` }}>
           <h3 style={{ 
             margin: '0 0 16px 0', 
             fontSize: '14px', 
             fontWeight: '600',
-            color: '#f1f5f9'
+            color: currentTheme.text
           }}>
             Select Product
           </h3>
@@ -265,12 +322,12 @@ export default function TriTechAssistant() {
                 style={getProductButtonStyle(key)}
                 onMouseEnter={(e) => {
                   if (selectedProduct !== key) {
-                    e.target.style.backgroundColor = '#4a5568';
+                    e.target.style.backgroundColor = currentTheme.buttonHover;
                   }
                 }}
                 onMouseLeave={(e) => {
                   if (selectedProduct !== key) {
-                    e.target.style.backgroundColor = '#374151';
+                    e.target.style.backgroundColor = currentTheme.buttonBg;
                   }
                 }}
               >
@@ -278,7 +335,7 @@ export default function TriTechAssistant() {
                   <span style={{ fontSize: '16px' }}>{product.icon}</span>
                   <div style={{ textAlign: 'left' }}>
                     <div style={{ fontWeight: '600' }}>{product.title}</div>
-                    <div style={{ fontSize: '11px', color: '#94a3b8' }}>{product.description}</div>
+                    <div style={{ fontSize: '11px', color: currentTheme.textSecondary }}>{product.description}</div>
                   </div>
                 </div>
               </button>
@@ -287,12 +344,12 @@ export default function TriTechAssistant() {
         </div>
 
         {/* Mode Toggle */}
-        <div style={{ padding: '20px', borderBottom: '1px solid #334155' }}>
+        <div style={{ padding: '20px', borderBottom: `1px solid ${currentTheme.border}` }}>
           <h3 style={{ 
             margin: '0 0 12px 0', 
             fontSize: '14px', 
             fontWeight: '600',
-            color: '#f1f5f9'
+            color: currentTheme.text
           }}>
             Response Mode
           </h3>
@@ -312,7 +369,7 @@ export default function TriTechAssistant() {
             </button>
           </div>
           
-          <div style={{ fontSize: '11px', color: '#64748b', marginTop: '8px' }}>
+          <div style={{ fontSize: '11px', color: currentTheme.textMuted, marginTop: '8px' }}>
             {forceMode === 'local' && 'Fast responses from knowledge base'}
             {forceMode === 'ai' && 'AI-enhanced detailed analysis'}
           </div>
@@ -336,28 +393,52 @@ export default function TriTechAssistant() {
                 onClick={(e) => handleSubmit(e, question)}
                 style={{
                   padding: '10px 12px',
-                  backgroundColor: '#374151',
-                  border: '1px solid #4a5568',
+                  backgroundColor: currentTheme.buttonBg,
+                  border: `1px solid ${currentTheme.border}`,
                   borderRadius: '6px',
                   cursor: 'pointer',
                   fontSize: '12px',
-                  color: '#e2e8f0',
+                  color: currentTheme.text,
                   transition: 'all 0.2s ease',
                   textAlign: 'left'
                 }}
                 onMouseEnter={(e) => {
-                  e.target.style.backgroundColor = '#4a5568';
+                  e.target.style.backgroundColor = currentTheme.buttonHover;
                   e.target.style.borderColor = '#3b82f6';
                 }}
                 onMouseLeave={(e) => {
-                  e.target.style.backgroundColor = '#374151';
-                  e.target.style.borderColor = '#4a5568';
+                  e.target.style.backgroundColor = currentTheme.buttonBg;
+                  e.target.style.borderColor = currentTheme.border;
                 }}
               >
                 {question}
               </button>
             ))}
           </div>
+        </div>
+
+        {/* Admin Link */}
+        <div style={{ 
+          padding: '20px', 
+          borderTop: `1px solid ${currentTheme.border}`,
+          textAlign: 'center'
+        }}>
+          <a
+            href="/admin"
+            target="_blank"
+            style={{
+              padding: '8px 16px',
+              backgroundColor: '#8b5cf6',
+              color: 'white',
+              borderRadius: '8px',
+              textDecoration: 'none',
+              fontSize: '12px',
+              fontWeight: '500',
+              display: 'inline-block'
+            }}
+          >
+            🛠️ Admin Dashboard
+          </a>
         </div>
       </div>
 
@@ -367,8 +448,8 @@ export default function TriTechAssistant() {
         {/* Chat Header */}
         <div style={{ 
           padding: '16px 24px', 
-          borderBottom: '1px solid #334155',
-          backgroundColor: '#1e293b'
+          borderBottom: `1px solid ${currentTheme.border}`,
+          backgroundColor: currentTheme.cardBg
         }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div>
@@ -376,14 +457,14 @@ export default function TriTechAssistant() {
                 margin: '0', 
                 fontSize: '18px', 
                 fontWeight: '600',
-                color: '#f1f5f9'
+                color: currentTheme.text
               }}>
                 {products[selectedProduct].icon} {products[selectedProduct].title}
               </h2>
               <p style={{ 
                 margin: '4px 0 0 0', 
                 fontSize: '13px', 
-                color: '#94a3b8' 
+                color: currentTheme.textSecondary 
               }}>
                 Mode: {forceMode === 'local' ? '⚡ Fast Local' : '🧠 AI Enhanced'} • {products[selectedProduct].description}
               </p>
@@ -410,8 +491,9 @@ export default function TriTechAssistant() {
                 maxWidth: '75%',
                 padding: '12px 16px',
                 borderRadius: '12px',
-                backgroundColor: message.role === 'user' ? '#3b82f6' : '#374151',
-                border: message.role === 'assistant' ? '1px solid #4a5568' : 'none'
+                backgroundColor: message.role === 'user' ? '#3b82f6' : currentTheme.cardBg,
+                border: message.role === 'assistant' ? `1px solid ${currentTheme.border}` : 'none',
+                color: message.role === 'user' ? 'white' : currentTheme.text
               }}>
                 {message.role === 'assistant' && message.source !== 'system' && (
                   <div style={{ 
@@ -420,7 +502,7 @@ export default function TriTechAssistant() {
                     gap: '8px', 
                     marginBottom: '8px',
                     fontSize: '12px',
-                    color: '#94a3b8'
+                    color: currentTheme.textSecondary
                   }}>
                     🤖 Assistant
                     {getSourceBadge(message.source)}
@@ -428,8 +510,7 @@ export default function TriTechAssistant() {
                 )}
                 <div style={{ 
                   fontSize: '14px', 
-                  lineHeight: '1.5',
-                  color: message.role === 'user' ? 'white' : '#e2e8f0'
+                  lineHeight: '1.5'
                 }}>
                   {formatMessage(message.content)}
                 </div>
@@ -442,8 +523,8 @@ export default function TriTechAssistant() {
               <div style={{ 
                 padding: '12px 16px',
                 borderRadius: '12px',
-                backgroundColor: '#374151',
-                border: '1px solid #4a5568'
+                backgroundColor: currentTheme.cardBg,
+                border: `1px solid ${currentTheme.border}`
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <div style={{ 
@@ -467,7 +548,7 @@ export default function TriTechAssistant() {
                     backgroundColor: '#3b82f6',
                     animation: 'pulse 1.5s ease-in-out infinite 0.4s'
                   }}></div>
-                  <span style={{ fontSize: '12px', color: '#94a3b8', marginLeft: '8px' }}>
+                  <span style={{ fontSize: '12px', color: currentTheme.textSecondary, marginLeft: '8px' }}>
                     {forceMode === 'ai' ? 'AI thinking...' : 'Searching locally...'}
                   </span>
                 </div>
@@ -480,8 +561,8 @@ export default function TriTechAssistant() {
         {/* Input Area */}
         <div style={{ 
           padding: '24px',
-          borderTop: '1px solid #334155',
-          backgroundColor: '#1e293b'
+          borderTop: `1px solid ${currentTheme.border}`,
+          backgroundColor: currentTheme.cardBg
         }}>
           <form onSubmit={handleSubmit} style={{ display: 'flex', gap: '12px' }}>
             <textarea
@@ -498,9 +579,9 @@ export default function TriTechAssistant() {
                 flex: 1,
                 padding: '12px 16px',
                 borderRadius: '12px',
-                border: '1px solid #4a5568',
-                backgroundColor: '#374151',
-                color: 'white',
+                border: `1px solid ${currentTheme.inputBorder}`,
+                backgroundColor: currentTheme.inputBg,
+                color: currentTheme.text,
                 fontSize: '14px',
                 resize: 'none',
                 minHeight: '48px',
@@ -516,7 +597,7 @@ export default function TriTechAssistant() {
                 padding: '12px 24px',
                 borderRadius: '12px',
                 border: 'none',
-                backgroundColor: isLoading || !input.trim() ? '#4a5568' : '#3b82f6',
+                backgroundColor: isLoading || !input.trim() ? currentTheme.textMuted : '#3b82f6',
                 color: 'white',
                 fontSize: '14px',
                 fontWeight: '500',
