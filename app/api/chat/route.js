@@ -151,9 +151,11 @@ export async function POST(request) {
     
     // Check if should use AI for complex queries FIRST
     if (shouldUseAI(message)) {
+      console.log('AI trigger detected for query:', message);
       const apiKey = process?.env?.CLAUDE_API_KEY;
       
       if (apiKey) {
+        console.log('API key found, calling Claude...');
         try {
           const response = await fetch('https://api.anthropic.com/v1/messages', {
             method: 'POST',
@@ -163,7 +165,7 @@ export async function POST(request) {
               'anthropic-version': '2023-06-01'
             },
             body: JSON.stringify({
-              model: 'claude-3-sonnet-20240229',
+              model: 'claude-3-5-sonnet-20241022',
               max_tokens: 1000,
               messages: [{
                 role: 'user',
@@ -172,19 +174,29 @@ export async function POST(request) {
             })
           });
           
+          console.log('Claude API response status:', response.status);
+          
           if (response.ok) {
             const data = await response.json();
+            console.log('Claude API success, returning AI response');
             return NextResponse.json({
               response: data.content[0].text,
               source: 'ai',
               confidence: 'high',
               relatedTopics: ['Advanced Analysis', 'Integration Details', 'Workflow Optimization']
             });
+          } else {
+            const errorText = await response.text();
+            console.error('Claude API error response:', response.status, errorText);
           }
         } catch (error) {
-          console.error('Claude API error:', error);
+          console.error('Claude API fetch error:', error);
         }
+      } else {
+        console.log('No API key found, falling back to local');
       }
+    } else {
+      console.log('No AI trigger detected for query:', message);
     }
     
     // Try local knowledge base for simple queries
