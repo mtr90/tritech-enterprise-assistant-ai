@@ -149,19 +149,7 @@ export async function POST(request) {
       );
     }
     
-    // Try local knowledge base first
-    const localMatch = findBestMatch(message);
-    
-    if (localMatch) {
-      return NextResponse.json({
-        response: localMatch.response,
-        source: 'local',
-        confidence: localMatch.confidence,
-        relatedTopics: ['Premium Tax Features', 'Municipal Tax Setup', 'FormsPlus Integration']
-      });
-    }
-    
-    // Check if should use AI for complex queries
+    // Check if should use AI for complex queries FIRST
     if (shouldUseAI(message)) {
       const apiKey = process?.env?.CLAUDE_API_KEY;
       
@@ -179,7 +167,7 @@ export async function POST(request) {
               max_tokens: 1000,
               messages: [{
                 role: 'user',
-                content: `You are a TriTech Premium Pro Enterprise expert. Answer this question about insurance tax software: ${message}`
+                content: `You are a TriTech Premium Pro Enterprise expert assistant with deep knowledge of insurance tax software. Answer this question about the system: ${message}`
               }]
             })
           });
@@ -198,6 +186,20 @@ export async function POST(request) {
         }
       }
     }
+    
+    // Try local knowledge base for simple queries
+    const localMatch = findBestMatch(message);
+    
+    if (localMatch) {
+      return NextResponse.json({
+        response: localMatch.response,
+        source: 'local',
+        confidence: localMatch.confidence,
+        relatedTopics: ['Premium Tax Features', 'Municipal Tax Setup', 'FormsPlus Integration']
+      });
+    }
+    
+
     
     // Fallback response
     return NextResponse.json({
