@@ -5,7 +5,7 @@ const SUPABASE_PROJECT_ID = 'duaudazaqleaxbowqxsw';
 export async function POST(request) {
   try {
     const formData = await request.formData();
-    const csvFile = formData.get('csv');
+    const csvFile = formData.get('file');
     const product = formData.get('product');
 
     if (!csvFile || !product) {
