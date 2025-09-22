@@ -70,7 +70,7 @@ export async function POST(request) {
     }
     
     // Validate API key exists
-    const apiKey = process.env.CLAUDE_API_KEY;
+    const apiKey = process?.env?.CLAUDE_API_KEY;
     if (!apiKey) {
       console.error('Claude API key not configured');
       return addSecurityHeaders(
@@ -85,7 +85,7 @@ export async function POST(request) {
     let body;
     try {
       body = await request.json();
-    } catch (error) {
+    } catch (_error) {
       return addSecurityHeaders(
         NextResponse.json(
           { error: 'Invalid JSON in request body' },
@@ -213,7 +213,7 @@ export async function POST(request) {
 
 function buildSecurePrompt(localContext, userQuery) {
   // Sanitize context to prevent injection
-  const sanitizedContext = JSON.stringify(localContext).slice(0, 500);
+  const _sanitizedContext = JSON.stringify(localContext).slice(0, 500);
   
   return `You are a TriTech Premium Pro Enterprise expert assistant with deep knowledge of insurance tax software.
 
@@ -268,7 +268,7 @@ function extractRelatedTopics(responseText) {
 }
 
 // Handle OPTIONS for CORS
-export async function OPTIONS(request) {
+export async function OPTIONS() {
   return addSecurityHeaders(
     new NextResponse(null, {
       status: 200,

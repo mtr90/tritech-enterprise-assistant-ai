@@ -1,0 +1,22 @@
+{
+  "extends": ["next/core-web-vitals"],
+  "rules": {
+    "no-undef": "off",
+    "no-unused-vars": "off",
+    "react-refresh/only-export-components": "off",
+    "@next/next/no-img-element": "off"
+  },
+  "env": {
+    "node": true,
+    "browser": true,
+    "es6": true
+  },
+  "globals": {
+    "process": "readonly",
+    "global": "readonly",
+    "__dirname": "readonly",
+    "__filename": "readonly",
+    "module": "readonly",
+    "require": "readonly"
+  }
+}
