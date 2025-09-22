@@ -91,7 +91,7 @@ export default function AdminDashboard() {
 
     try {
       const formData = new FormData();
-      formData.append('csv', csvFile);
+      formData.append('file', csvFile);
       formData.append('product', selectedProduct);
 
       const response = await fetch('/api/admin/upload-csv', {
