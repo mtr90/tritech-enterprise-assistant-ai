@@ -140,7 +140,7 @@ function shouldUseAI(query) {
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { message } = body;
+    const { message, forceMode = 'auto' } = body;
     
     if (!message) {
       return NextResponse.json(
@@ -149,9 +149,13 @@ export async function POST(request) {
       );
     }
     
+    // Handle force mode logic
+    const useAI = forceMode === 'ai' || (forceMode === 'auto' && shouldUseAI(message));
+    const useLocal = forceMode === 'local' || (forceMode === 'auto' && !shouldUseAI(message));
+    
     // Check if should use AI for complex queries FIRST
-    if (shouldUseAI(message)) {
-      console.log('AI trigger detected for query:', message);
+    if (useAI && forceMode !== 'local') {
+      console.log(`AI mode triggered (${forceMode}) for query:`, message);
       const apiKey = process?.env?.CLAUDE_API_KEY;
       
       if (apiKey) {

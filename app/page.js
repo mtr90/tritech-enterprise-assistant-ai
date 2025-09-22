@@ -1,16 +1,56 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 
 export default function TriTechAssistant() {
-  const [messages, setMessages] = useState([]);
+  const [messages, setMessages] = useState([
+    {
+      role: 'assistant',
+      content: 'Welcome to TriTech Enterprise Assistant\n\nI\'m your intelligent assistant for the Premium Pro Enterprise workbook with hybrid AI capabilities. I can handle both simple queries locally and complex analysis using advanced AI.\n\nSelect sample questions from the sidebar or ask me anything about TriTech products!',
+      source: 'system',
+      confidence: 'high'
+    }
+  ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [forceMode, setForceMode] = useState('auto'); // 'auto', 'local', 'ai'
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [apiStatus, setApiStatus] = useState('checking');
   const messagesEndRef = useRef(null);
 
+  const sampleQuestions = {
+    'Premium': [
+      'List all Premium Tax features',
+      'How do retaliatory tax calculations work?',
+      'What states support electronic filing?',
+      'Explain Premium Tax annual return process',
+      'How to set up multi-state filing?'
+    ],
+    'Municipal': [
+      'How does Municipal rollover work?',
+      'What are Municipal Tax key features?',
+      'Explain entity management in Municipal',
+      'How to update tax rates in Municipal?',
+      'Municipal data preservation process'
+    ],
+    'FormsPlus': [
+      'List all FormsPlus capabilities',
+      'How does FormsPlus integrate with Premium Tax?',
+      'What forms are supported in FormsPlus?',
+      'FormsPlus electronic filing options',
+      'How to manage form templates?'
+    ],
+    'Allocator': [
+      'What is the Allocator module used for?',
+      'How does Allocator integrate with other modules?',
+      'Allocator calculation methods',
+      'Setting up allocation rules',
+      'Allocator reporting capabilities'
+    ]
+  };
+
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
   useEffect(() => {
@@ -31,33 +71,12 @@ export default function TriTechAssistant() {
     }
   };
 
-  const formatResponse = (text) => {
-    // Convert markdown-style formatting to HTML
-    return text
-      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-      .replace(/\*(.*?)\*/g, '<em>$1</em>')
-      .replace(/•/g, '•')
-      .split('\n')
-      .map(line => {
-        if (line.trim().startsWith('•')) {
-          return `<div style="margin: 0.25rem 0; padding-left: 1rem;">${line.trim()}</div>`;
-        }
-        if (line.trim().startsWith('**') && line.trim().endsWith('**')) {
-          return `<div style="font-weight: bold; margin: 1rem 0 0.5rem 0; color: #60a5fa;">${line.replace(/\*\*/g, '')}</div>`;
-        }
-        if (line.trim() === '') {
-          return '<div style="height: 0.5rem;"></div>';
-        }
-        return `<div style="margin: 0.25rem 0;">${line}</div>`;
-      })
-      .join('');
-  };
+  const handleSubmit = async (e, questionText = null) => {
+    e?.preventDefault();
+    const messageText = questionText || input.trim();
+    if (!messageText || isLoading) return;
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!input.trim() || isLoading) return;
-
-    const userMessage = { role: 'user', content: input.trim() };
+    const userMessage = { role: 'user', content: messageText };
     setMessages(prev => [...prev, userMessage]);
     setInput('');
     setIsLoading(true);
@@ -66,370 +85,387 @@ export default function TriTechAssistant() {
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: input.trim() }),
+        body: JSON.stringify({ 
+          message: messageText,
+          forceMode: forceMode 
+        })
       });
 
-      const data = await response.json();
-      
-      if (data.error) {
-        throw new Error(data.error);
-      }
+      if (!response.ok) throw new Error('Network response was not ok');
 
+      const data = await response.json();
       const assistantMessage = {
         role: 'assistant',
         content: data.response,
-        source: data.source || 'local',
-        confidence: data.confidence || 'medium',
-        relatedTopics: data.relatedTopics || []
+        source: data.source,
+        confidence: data.confidence,
+        relatedTopics: data.relatedTopics
       };
 
       setMessages(prev => [...prev, assistantMessage]);
     } catch (error) {
-      const errorMessage = {
+      console.error('Error:', error);
+      setMessages(prev => [...prev, {
         role: 'assistant',
         content: 'I apologize, but I encountered an error processing your request. Please try again.',
         source: 'error',
         confidence: 'low'
-      };
-      setMessages(prev => [...prev, errorMessage]);
+      }]);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const quickActions = [
-    "List all Premium Tax features",
-    "How does Municipal rollover work?",
-    "List all FormsPlus capabilities"
-  ];
-
-  const styles = {
-    container: {
-      minHeight: '100vh',
-      backgroundColor: '#0f172a',
-      color: '#f1f5f9',
-      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
-    },
-    header: {
-      backgroundColor: '#1e293b',
-      borderBottom: '1px solid #334155',
-      padding: '1.5rem 1rem',
-      textAlign: 'center',
-      position: 'sticky',
-      top: 0,
-      zIndex: 10
-    },
-    title: {
-      fontSize: '1.75rem',
-      fontWeight: '700',
-      margin: '0 0 0.5rem 0',
-      background: 'linear-gradient(135deg, #60a5fa, #a78bfa)',
-      WebkitBackgroundClip: 'text',
-      WebkitTextFillColor: 'transparent',
-      backgroundClip: 'text'
-    },
-    subtitle: {
-      fontSize: '0.875rem',
-      color: '#94a3b8',
-      margin: '0 0 0.75rem 0'
-    },
-    badge: {
-      display: 'inline-flex',
-      alignItems: 'center',
-      padding: '0.375rem 0.75rem',
-      borderRadius: '9999px',
-      fontSize: '0.75rem',
-      fontWeight: '600',
-      backgroundColor: apiStatus === 'ready' ? '#059669' : '#d97706',
-      color: 'white',
-      gap: '0.375rem'
-    },
-    main: {
-      maxWidth: '800px',
-      margin: '0 auto',
-      padding: '1rem',
-      height: 'calc(100vh - 120px)',
-      display: 'flex',
-      flexDirection: 'column'
-    },
-    chatContainer: {
-      flex: 1,
-      display: 'flex',
-      flexDirection: 'column',
-      backgroundColor: '#1e293b',
-      borderRadius: '1rem',
-      border: '1px solid #334155',
-      overflow: 'hidden'
-    },
-    messagesContainer: {
-      flex: 1,
-      overflowY: 'auto',
-      padding: '1rem',
-      display: 'flex',
-      flexDirection: 'column',
-      gap: '1rem'
-    },
-    message: {
-      maxWidth: '85%',
-      padding: '0.875rem 1.125rem',
-      borderRadius: '1rem',
-      fontSize: '0.875rem',
-      lineHeight: '1.5'
-    },
-    userMessage: {
-      backgroundColor: '#3b82f6',
-      color: 'white',
-      alignSelf: 'flex-end',
-      borderBottomRightRadius: '0.375rem'
-    },
-    assistantMessage: {
-      backgroundColor: '#374151',
-      color: '#f9fafb',
-      alignSelf: 'flex-start',
-      borderBottomLeftRadius: '0.375rem',
-      border: '1px solid #4b5563'
-    },
-    messageHeader: {
-      display: 'flex',
-      alignItems: 'center',
-      gap: '0.5rem',
-      marginBottom: '0.5rem',
-      fontSize: '0.75rem',
-      fontWeight: '600',
-      opacity: 0.8
-    },
-    sourceBadge: {
-      padding: '0.125rem 0.375rem',
-      borderRadius: '0.375rem',
-      fontSize: '0.625rem',
-      fontWeight: '500'
-    },
-    aiSource: {
-      backgroundColor: '#7c3aed',
-      color: 'white'
-    },
-    localSource: {
-      backgroundColor: '#059669',
-      color: 'white'
-    },
-    inputContainer: {
-      padding: '1rem',
-      borderTop: '1px solid #334155',
-      backgroundColor: '#1e293b'
-    },
-    quickActions: {
-      display: 'flex',
-      gap: '0.5rem',
-      marginBottom: '1rem',
-      flexWrap: 'wrap'
-    },
-    quickButton: {
-      backgroundColor: '#374151',
-      color: '#d1d5db',
-      border: '1px solid #4b5563',
-      padding: '0.5rem 0.75rem',
-      borderRadius: '0.5rem',
-      cursor: 'pointer',
-      fontSize: '0.75rem',
-      transition: 'all 0.2s',
-      whiteSpace: 'nowrap'
-    },
-    form: {
-      display: 'flex',
-      gap: '0.75rem',
-      alignItems: 'flex-end'
-    },
-    inputWrapper: {
-      flex: 1,
-      position: 'relative'
-    },
-    input: {
-      width: '100%',
-      backgroundColor: '#374151',
-      border: '1px solid #4b5563',
-      color: '#f9fafb',
-      padding: '0.875rem 1rem',
-      borderRadius: '0.75rem',
-      fontSize: '0.875rem',
-      outline: 'none',
-      resize: 'none',
-      minHeight: '44px',
-      maxHeight: '120px'
-    },
-    button: {
-      backgroundColor: '#3b82f6',
-      color: 'white',
-      border: 'none',
-      padding: '0.875rem 1.5rem',
-      borderRadius: '0.75rem',
-      cursor: 'pointer',
-      fontSize: '0.875rem',
-      fontWeight: '600',
-      transition: 'all 0.2s',
-      minHeight: '44px'
-    },
-    loadingDots: {
-      display: 'flex',
-      gap: '0.25rem',
-      alignItems: 'center'
-    },
-    dot: {
-      width: '0.375rem',
-      height: '0.375rem',
-      backgroundColor: '#60a5fa',
-      borderRadius: '50%',
-      animation: 'pulse 1.5s ease-in-out infinite'
-    }
+  const formatMessage = (content) => {
+    return content.split('\n').map((line, index) => {
+      if (line.startsWith('**') && line.endsWith('**')) {
+        return <div key={index} style={{ fontWeight: 'bold', color: '#3b82f6', marginTop: '12px', marginBottom: '8px' }}>{line.slice(2, -2)}</div>;
+      }
+      if (line.startsWith('• ')) {
+        return <div key={index} style={{ marginLeft: '16px', marginBottom: '4px' }}>• {line.slice(2)}</div>;
+      }
+      if (line.trim() === '') {
+        return <div key={index} style={{ height: '8px' }}></div>;
+      }
+      return <div key={index} style={{ marginBottom: '4px' }}>{line}</div>;
+    });
   };
 
-  return (
-    <div style={styles.container}>
-      <style jsx>{`
-        @keyframes pulse {
-          0%, 80%, 100% { opacity: 0.3; }
-          40% { opacity: 1; }
-        }
-        .dot:nth-child(2) { animation-delay: 0.2s; }
-        .dot:nth-child(3) { animation-delay: 0.4s; }
-      `}</style>
-      
-      <header style={styles.header}>
-        <h1 style={styles.title}>TriTech Enterprise Assistant</h1>
-        <p style={styles.subtitle}>🤖 AI Enhanced Intelligence</p>
-        <div style={styles.badge}>
-          <span>{apiStatus === 'ready' ? '✅' : '⚡'}</span>
-          {apiStatus === 'ready' ? 'Hybrid AI Ready' : 'Local Mode Only'}
-        </div>
-      </header>
+  const getSourceBadge = (source) => {
+    if (source === 'ai') {
+      return <span style={{ 
+        backgroundColor: '#10b981', 
+        color: 'white', 
+        padding: '2px 8px', 
+        borderRadius: '12px', 
+        fontSize: '12px', 
+        fontWeight: '500' 
+      }}>🧠 AI Enhanced</span>;
+    }
+    if (source === 'local') {
+      return <span style={{ 
+        backgroundColor: '#3b82f6', 
+        color: 'white', 
+        padding: '2px 8px', 
+        borderRadius: '12px', 
+        fontSize: '12px', 
+        fontWeight: '500' 
+      }}>⚡ Fast Local</span>;
+    }
+    return null;
+  };
 
-      <main style={styles.main}>
-        <div style={styles.chatContainer}>
-          <div style={styles.messagesContainer}>
-            {messages.length === 0 && (
-              <div style={{
-                textAlign: 'center',
-                padding: '2rem',
-                color: '#64748b',
-                fontSize: '0.875rem'
-              }}>
-                <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>💬</div>
-                <div>Welcome! Ask me anything about TriTech Premium Pro Enterprise.</div>
-              </div>
-            )}
-            
-            {messages.map((message, index) => (
-              <div
-                key={index}
-                style={{
-                  ...styles.message,
-                  ...(message.role === 'user' ? styles.userMessage : styles.assistantMessage)
-                }}
+  const getModeToggleStyle = (mode) => ({
+    padding: '6px 12px',
+    borderRadius: '6px',
+    border: 'none',
+    cursor: 'pointer',
+    fontSize: '12px',
+    fontWeight: '500',
+    backgroundColor: forceMode === mode ? '#3b82f6' : '#374151',
+    color: 'white',
+    transition: 'all 0.2s ease'
+  });
+
+  return (
+    <div style={{ 
+      display: 'flex', 
+      height: '100vh', 
+      backgroundColor: '#0f172a', 
+      color: 'white',
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+    }}>
+      {/* Sidebar */}
+      <div style={{ 
+        width: sidebarOpen ? '320px' : '0px',
+        backgroundColor: '#1e293b',
+        borderRight: '1px solid #334155',
+        transition: 'width 0.3s ease',
+        overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column'
+      }}>
+        <div style={{ padding: '20px', borderBottom: '1px solid #334155' }}>
+          <h3 style={{ margin: '0 0 16px 0', fontSize: '16px', fontWeight: '600' }}>Sample Questions</h3>
+          
+          {/* Mode Toggle */}
+          <div style={{ marginBottom: '16px' }}>
+            <div style={{ fontSize: '12px', marginBottom: '8px', color: '#94a3b8' }}>Response Mode:</div>
+            <div style={{ display: 'flex', gap: '4px' }}>
+              <button 
+                onClick={() => setForceMode('auto')}
+                style={getModeToggleStyle('auto')}
               >
-                {message.role === 'assistant' && (
-                  <div style={styles.messageHeader}>
-                    <span>🤖 Assistant</span>
-                    {message.source && (
-                      <span style={{
-                        ...styles.sourceBadge,
-                        ...(message.source === 'ai' ? styles.aiSource : styles.localSource)
-                      }}>
-                        {message.source === 'ai' ? '🧠 AI Enhanced' : '⚡ Fast Local'}
-                      </span>
-                    )}
+                Auto
+              </button>
+              <button 
+                onClick={() => setForceMode('local')}
+                style={getModeToggleStyle('local')}
+              >
+                Local
+              </button>
+              <button 
+                onClick={() => setForceMode('ai')}
+                style={getModeToggleStyle('ai')}
+              >
+                AI
+              </button>
+            </div>
+            <div style={{ fontSize: '10px', color: '#64748b', marginTop: '4px' }}>
+              {forceMode === 'auto' && 'Smart routing based on query complexity'}
+              {forceMode === 'local' && 'Force local knowledge base responses'}
+              {forceMode === 'ai' && 'Force AI-enhanced responses'}
+            </div>
+          </div>
+        </div>
+
+        <div style={{ flex: 1, overflow: 'auto', padding: '16px' }}>
+          {Object.entries(sampleQuestions).map(([product, questions]) => (
+            <div key={product} style={{ marginBottom: '24px' }}>
+              <h4 style={{ 
+                margin: '0 0 12px 0', 
+                fontSize: '14px', 
+                fontWeight: '600', 
+                color: '#3b82f6',
+                borderBottom: '1px solid #334155',
+                paddingBottom: '4px'
+              }}>
+                {product}
+              </h4>
+              {questions.map((question, index) => (
+                <button
+                  key={index}
+                  onClick={(e) => handleSubmit(e, question)}
+                  style={{
+                    display: 'block',
+                    width: '100%',
+                    textAlign: 'left',
+                    padding: '8px 12px',
+                    marginBottom: '6px',
+                    backgroundColor: 'transparent',
+                    border: '1px solid #374151',
+                    borderRadius: '6px',
+                    color: '#e2e8f0',
+                    fontSize: '12px',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.backgroundColor = '#374151';
+                    e.target.style.borderColor = '#3b82f6';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.backgroundColor = 'transparent';
+                    e.target.style.borderColor = '#374151';
+                  }}
+                >
+                  {question}
+                </button>
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Main Chat Area */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+        {/* Header */}
+        <div style={{ 
+          padding: '16px 24px', 
+          borderBottom: '1px solid #334155',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <button
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              style={{
+                backgroundColor: 'transparent',
+                border: '1px solid #374151',
+                borderRadius: '6px',
+                color: 'white',
+                padding: '8px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+            >
+              {sidebarOpen ? '◀' : '▶'}
+            </button>
+            <div>
+              <h1 style={{ 
+                margin: 0, 
+                fontSize: '24px', 
+                fontWeight: '700',
+                background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text'
+              }}>
+                TriTech Enterprise Assistant
+              </h1>
+              <div style={{ fontSize: '14px', color: '#94a3b8', marginTop: '4px' }}>
+                🧠 AI Enhanced Intelligence • Mode: {forceMode.charAt(0).toUpperCase() + forceMode.slice(1)}
+              </div>
+            </div>
+          </div>
+          <div style={{ 
+            padding: '6px 12px', 
+            backgroundColor: apiStatus === 'ready' ? '#10b981' : '#d97706', 
+            borderRadius: '20px', 
+            fontSize: '12px', 
+            fontWeight: '500' 
+          }}>
+            {apiStatus === 'ready' ? '✅ Hybrid AI Ready' : '⚡ Local Mode Only'}
+          </div>
+        </div>
+
+        {/* Messages */}
+        <div style={{ 
+          flex: 1, 
+          overflow: 'auto', 
+          padding: '24px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '16px'
+        }}>
+          {messages.map((message, index) => (
+            <div key={index} style={{ 
+              display: 'flex', 
+              justifyContent: message.role === 'user' ? 'flex-end' : 'flex-start',
+              width: '100%'
+            }}>
+              <div style={{ 
+                maxWidth: '70%',
+                padding: '12px 16px',
+                borderRadius: '12px',
+                backgroundColor: message.role === 'user' ? '#3b82f6' : '#1e293b',
+                border: message.role === 'assistant' ? '1px solid #334155' : 'none'
+              }}>
+                {message.role === 'assistant' && message.source !== 'system' && (
+                  <div style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '8px', 
+                    marginBottom: '8px',
+                    fontSize: '12px',
+                    color: '#94a3b8'
+                  }}>
+                    🤖 Assistant
+                    {getSourceBadge(message.source)}
                   </div>
                 )}
-                <div 
-                  dangerouslySetInnerHTML={{ 
-                    __html: message.role === 'assistant' 
-                      ? formatResponse(message.content)
-                      : message.content
-                  }}
-                />
-              </div>
-            ))}
-            
-            {isLoading && (
-              <div style={{ ...styles.message, ...styles.assistantMessage }}>
-                <div style={styles.messageHeader}>
-                  <span>🤖 Assistant</span>
-                </div>
-                <div style={styles.loadingDots}>
-                  <span>Thinking</span>
-                  <div style={styles.dot}></div>
-                  <div style={styles.dot}></div>
-                  <div style={styles.dot}></div>
+                <div style={{ 
+                  fontSize: '14px', 
+                  lineHeight: '1.5',
+                  color: message.role === 'user' ? 'white' : '#e2e8f0'
+                }}>
+                  {formatMessage(message.content)}
                 </div>
               </div>
-            )}
-            <div ref={messagesEndRef} />
-          </div>
-
-          <div style={styles.inputContainer}>
-            {messages.length === 0 && (
-              <div style={styles.quickActions}>
-                {quickActions.map((action, index) => (
-                  <button
-                    key={index}
-                    style={styles.quickButton}
-                    onClick={() => setInput(action)}
-                    onMouseOver={(e) => {
-                      e.target.style.backgroundColor = '#4b5563';
-                      e.target.style.borderColor = '#6b7280';
-                    }}
-                    onMouseOut={(e) => {
-                      e.target.style.backgroundColor = '#374151';
-                      e.target.style.borderColor = '#4b5563';
-                    }}
-                  >
-                    {action}
-                  </button>
-                ))}
+            </div>
+          ))}
+          
+          {isLoading && (
+            <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
+              <div style={{ 
+                padding: '12px 16px',
+                borderRadius: '12px',
+                backgroundColor: '#1e293b',
+                border: '1px solid #334155'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ 
+                    width: '8px', 
+                    height: '8px', 
+                    borderRadius: '50%', 
+                    backgroundColor: '#3b82f6',
+                    animation: 'pulse 1.5s ease-in-out infinite'
+                  }}></div>
+                  <div style={{ 
+                    width: '8px', 
+                    height: '8px', 
+                    borderRadius: '50%', 
+                    backgroundColor: '#3b82f6',
+                    animation: 'pulse 1.5s ease-in-out infinite 0.2s'
+                  }}></div>
+                  <div style={{ 
+                    width: '8px', 
+                    height: '8px', 
+                    borderRadius: '50%', 
+                    backgroundColor: '#3b82f6',
+                    animation: 'pulse 1.5s ease-in-out infinite 0.4s'
+                  }}></div>
+                  <span style={{ fontSize: '12px', color: '#94a3b8', marginLeft: '8px' }}>
+                    {forceMode === 'ai' ? 'AI thinking...' : forceMode === 'local' ? 'Searching locally...' : 'Processing...'}
+                  </span>
+                </div>
               </div>
-            )}
-            
-            <form onSubmit={handleSubmit} style={styles.form}>
-              <div style={styles.inputWrapper}>
-                <textarea
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  placeholder="Ask me anything about Premium Pro Enterprise..."
-                  style={styles.input}
-                  onFocus={(e) => e.target.style.borderColor = '#3b82f6'}
-                  onBlur={(e) => e.target.style.borderColor = '#4b5563'}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault();
-                      handleSubmit(e);
-                    }
-                  }}
-                  rows={1}
-                />
-              </div>
-              <button
-                type="submit"
-                disabled={isLoading || !input.trim()}
-                style={{
-                  ...styles.button,
-                  opacity: isLoading || !input.trim() ? 0.5 : 1,
-                  cursor: isLoading || !input.trim() ? 'not-allowed' : 'pointer'
-                }}
-                onMouseOver={(e) => {
-                  if (!isLoading && input.trim()) {
-                    e.target.style.backgroundColor = '#2563eb';
-                  }
-                }}
-                onMouseOut={(e) => {
-                  if (!isLoading && input.trim()) {
-                    e.target.style.backgroundColor = '#3b82f6';
-                  }
-                }}
-              >
-                {isLoading ? '...' : 'Send'}
-              </button>
-            </form>
-          </div>
+            </div>
+          )}
+          <div ref={messagesEndRef} />
         </div>
-      </main>
+
+        {/* Input */}
+        <div style={{ 
+          padding: '24px',
+          borderTop: '1px solid #334155'
+        }}>
+          <form onSubmit={handleSubmit} style={{ display: 'flex', gap: '12px' }}>
+            <textarea
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSubmit(e);
+                }
+              }}
+              placeholder="Ask me anything about the Premium Pro Enterprise..."
+              style={{
+                flex: 1,
+                padding: '12px 16px',
+                borderRadius: '12px',
+                border: '1px solid #374151',
+                backgroundColor: '#1e293b',
+                color: 'white',
+                fontSize: '14px',
+                resize: 'none',
+                minHeight: '48px',
+                maxHeight: '120px',
+                outline: 'none'
+              }}
+              rows={1}
+            />
+            <button
+              type="submit"
+              disabled={isLoading || !input.trim()}
+              style={{
+                padding: '12px 24px',
+                borderRadius: '12px',
+                border: 'none',
+                backgroundColor: isLoading || !input.trim() ? '#374151' : '#3b82f6',
+                color: 'white',
+                fontSize: '14px',
+                fontWeight: '500',
+                cursor: isLoading || !input.trim() ? 'not-allowed' : 'pointer',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              Send
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <style jsx>{`
+        @keyframes pulse {
+          0%, 100% { opacity: 0.4; }
+          50% { opacity: 1; }
+        }
+      `}</style>
     </div>
   );
 }
