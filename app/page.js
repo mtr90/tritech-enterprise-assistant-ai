@@ -55,6 +55,28 @@ export default function TriTechAssistant() {
         'FormsPlus electronic filing options',
         'How to manage form templates?'
       ]
+    },
+    'ClickUp Current Bugs': {
+      icon: '🐛',
+      title: 'ClickUp Current Bugs',
+      description: 'Current bug reports and solutions',
+      questions: [
+        'QA - Stratus kicking you back to login screen',
+        'Premium tax - Stage - Error when export the migrated company\'s PR sch',
+        'Stratus login issues after password reset',
+        'Premium Tax calculation errors for multi-state companies',
+        'Municipal Tax rollover process hanging',
+        'FormsPlus electronic filing timeout errors',
+        'Premium Tax retaliatory calculations incorrect',
+        'Municipal data import validation errors',
+        'FormsPlus form template loading slowly',
+        'Premium Tax year-end closing process errors',
+        'Municipal entity management sync issues',
+        'FormsPlus submission status not updating',
+        'Premium Tax allocation report generation fails',
+        'Municipal quarterly filing deadline alerts not working',
+        'FormsPlus data validation rules too restrictive'
+      ]
     }
   };
 
@@ -386,7 +408,16 @@ export default function TriTechAssistant() {
             🔥 Sample Questions
           </h3>
           
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <div style={{ 
+            display: 'flex', 
+            flexDirection: 'column', 
+            gap: '8px',
+            maxHeight: selectedProduct === 'ClickUp Current Bugs' ? '400px' : '300px',
+            overflowY: 'auto',
+            border: `1px solid ${currentTheme.border}`,
+            borderRadius: '8px',
+            padding: '8px'
+          }}>
             {products[selectedProduct].questions.map((question, index) => (
               <button
                 key={index}
