@@ -1,0 +1,4 @@
+Deployment forced at: 2025-01-23 14:15:00 UTC
+Version: 1.0.0
+Features: ClickUp Current Bugs integration added
+Cache invalidation: Force rebuild
