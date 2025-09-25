@@ -328,13 +328,13 @@ ${generateAcceptanceCriteria(featureRequest, originalResponse)}`;
 ${originalResponse}
 
 Suggestions to Fix:
-• Investigate the specific component or module mentioned
-• Check recent changes or updates that might have caused this issue
-• Verify configuration settings and data integrity
-• Test with different scenarios to isolate the problem
-• Review logs and error messages for additional context
-• Consider rollback options if recent changes are the cause
-• Implement proper error handling and user feedback`;
+• Refresh the app
+• Clear browser cache
+• Check system settings
+• Restart the browser
+• Update to latest version
+• Try different browser
+• Contact support if issue persists`;
 
     return bugReport;
   };
