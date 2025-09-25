@@ -19,11 +19,12 @@ export default function TriTechAssistant() {
   const [isDarkMode, setIsDarkMode] = useState(true); // Theme state
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [chatHistory, setChatHistory] = useState([
-    { id: 1, title: 'Premium Tax', icon: '💰', active: true },
-    { id: 2, title: 'Premium Tax - Stage Error', icon: '⚠️', active: false },
-    { id: 3, title: 'Login issues after reset', icon: '🔒', active: false },
-    { id: 4, title: 'Multi-state calculations', icon: '🧮', active: false }
+    { id: 1, title: 'Premium Tax', icon: '💰', active: true, messages: [] },
+    { id: 2, title: 'Premium Tax - Stage Error', icon: '⚠️', active: false, messages: [] },
+    { id: 3, title: 'Login issues after reset', icon: '🔒', active: false, messages: [] },
+    { id: 4, title: 'Multi-state calculations', icon: '🧮', active: false, messages: [] }
   ]);
+  const [currentChatId, setCurrentChatId] = useState(1);
   const messagesEndRef = useRef(null);
 
   const products = {
@@ -106,7 +107,9 @@ export default function TriTechAssistant() {
       chatLinkBg: 'rgba(59, 130, 246, 0.1)',
       chatLinkBorder: 'rgba(59, 130, 246, 0.2)',
       chatLinkText: '#f1f5f9',
-      chatLinkHover: '#334155'
+      chatLinkHover: '#334155',
+      deleteButton: '#ef4444',
+      deleteButtonHover: '#dc2626'
     },
     light: {
       bg: '#f8fafc',
@@ -125,13 +128,15 @@ export default function TriTechAssistant() {
       chatLinkBg: 'rgba(59, 130, 246, 0.05)',
       chatLinkBorder: 'rgba(59, 130, 246, 0.15)',
       chatLinkText: '#1e293b',
-      chatLinkHover: '#f1f5f9'
+      chatLinkHover: '#f1f5f9',
+      deleteButton: '#ef4444',
+      deleteButtonHover: '#dc2626'
     }
   };
 
   const currentTheme = isDarkMode ? theme.dark : theme.light;
 
-  // Icon components (simplified inline SVG)
+  // Icon components with improved AI robot icon
   const Icon = ({ name, size = 20, color = 'currentColor', ...props }) => {
     const icons = {
       Menu: <svg width={size} height={size} fill="none" stroke={color} viewBox="0 0 24 24" {...props}><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>,
@@ -139,11 +144,13 @@ export default function TriTechAssistant() {
       Moon: <svg width={size} height={size} fill="none" stroke={color} viewBox="0 0 24 24" {...props}><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>,
       Zap: <svg width={size} height={size} fill="none" stroke={color} viewBox="0 0 24 24" {...props}><polygon points="13,2 3,14 12,14 11,22 21,10 12,10 13,2"/></svg>,
       Bot: <svg width={size} height={size} fill="none" stroke={color} viewBox="0 0 24 24" {...props}><rect x="3" y="11" width="18" height="10" rx="2" ry="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4"/><line x1="8" y1="16" x2="8" y2="16"/><line x1="16" y1="16" x2="16" y2="16"/></svg>,
+      AIRobot: <svg width={size} height={size} fill="none" stroke={color} viewBox="0 0 24 24" {...props}><rect x="4" y="8" width="16" height="12" rx="2" ry="2"/><path d="M8 8V6a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><circle cx="9" cy="13" r="1"/><circle cx="15" cy="13" r="1"/><path d="M9 17h6"/></svg>,
       User: <svg width={size} height={size} fill="none" stroke={color} viewBox="0 0 24 24" {...props}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>,
       Send: <svg width={size} height={size} fill="none" stroke={color} viewBox="0 0 24 24" {...props}><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22,2 15,22 11,13 2,9 22,2"/></svg>,
       Plus: <svg width={size} height={size} fill="none" stroke={color} viewBox="0 0 24 24" {...props}><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>,
       ShieldCheck: <svg width={size} height={size} fill="none" stroke={color} viewBox="0 0 24 24" {...props}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>,
-      ChevronDown: <svg width={size} height={size} fill="none" stroke={color} viewBox="0 0 24 24" {...props}><polyline points="6,9 12,15 18,9"/></svg>
+      ChevronDown: <svg width={size} height={size} fill="none" stroke={color} viewBox="0 0 24 24" {...props}><polyline points="6,9 12,15 18,9"/></svg>,
+      Trash: <svg width={size} height={size} fill="none" stroke={color} viewBox="0 0 24 24" {...props}><polyline points="3,6 5,6 21,6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
     };
     return icons[name] || <div style={{width: size, height: size}}></div>;
   };
@@ -158,7 +165,40 @@ export default function TriTechAssistant() {
 
   useEffect(() => {
     checkApiStatus();
+    loadChatHistory();
   }, []);
+
+  // Load chat history from localStorage
+  const loadChatHistory = () => {
+    try {
+      const savedChats = localStorage.getItem('tritech-chat-history');
+      const savedCurrentChatId = localStorage.getItem('tritech-current-chat-id');
+      const savedMessages = localStorage.getItem('tritech-messages');
+      
+      if (savedChats) {
+        setChatHistory(JSON.parse(savedChats));
+      }
+      if (savedCurrentChatId) {
+        setCurrentChatId(parseInt(savedCurrentChatId));
+      }
+      if (savedMessages) {
+        setMessages(JSON.parse(savedMessages));
+      }
+    } catch (error) {
+      console.error('Error loading chat history:', error);
+    }
+  };
+
+  // Save chat history to localStorage
+  const saveChatHistory = (chats, chatId, msgs) => {
+    try {
+      localStorage.setItem('tritech-chat-history', JSON.stringify(chats));
+      localStorage.setItem('tritech-current-chat-id', chatId.toString());
+      localStorage.setItem('tritech-messages', JSON.stringify(msgs));
+    } catch (error) {
+      console.error('Error saving chat history:', error);
+    }
+  };
 
   const checkApiStatus = async () => {
     try {
@@ -176,7 +216,8 @@ export default function TriTechAssistant() {
     if (!messageText || isLoading) return;
 
     const userMessage = { role: 'user', content: messageText };
-    setMessages(prev => [...prev, userMessage]);
+    const newMessages = [...messages, userMessage];
+    setMessages(newMessages);
     setInput('');
     setIsLoading(true);
 
@@ -201,56 +242,112 @@ export default function TriTechAssistant() {
         relatedTopics: data.relatedTopics
       };
 
-      setMessages(prev => [...prev, assistantMessage]);
+      const finalMessages = [...newMessages, assistantMessage];
+      setMessages(finalMessages);
+      
+      // Save to current chat
+      const updatedChats = chatHistory.map(chat => 
+        chat.id === currentChatId 
+          ? { ...chat, messages: finalMessages, title: messageText.slice(0, 30) + (messageText.length > 30 ? '...' : '') }
+          : chat
+      );
+      setChatHistory(updatedChats);
+      saveChatHistory(updatedChats, currentChatId, finalMessages);
+      
     } catch (error) {
       console.error('Error:', error);
-      setMessages(prev => [...prev, {
+      const errorMessage = {
         role: 'assistant',
         content: 'I apologize, but I encountered an error processing your request. Please try again.',
         source: 'error',
         confidence: 'low'
-      }]);
+      };
+      const finalMessages = [...newMessages, errorMessage];
+      setMessages(finalMessages);
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleNewChat = () => {
-    const newChatId = chatHistory.length + 1;
+    const newChatId = Math.max(...chatHistory.map(c => c.id)) + 1;
     const newChat = {
       id: newChatId,
-      title: `New Chat ${newChatId}`,
+      title: 'New Chat',
       icon: '💬',
-      active: false
+      active: true,
+      messages: [{
+        role: 'assistant',
+        content: 'Welcome to TriTech Enterprise Assistant\n\nI\'m your intelligent assistant for the Premium Pro Enterprise workbook with hybrid AI capabilities. I can handle both simple queries locally and complex analysis using advanced AI.\n\nSelect a product and ask me anything about TriTech Enterprise!',
+        source: 'system',
+        confidence: 'high'
+      }]
     };
     
     // Set all chats to inactive and add new chat as active
-    setChatHistory(prev => [
-      { ...newChat, active: true },
-      ...prev.map(chat => ({ ...chat, active: false }))
-    ]);
+    const updatedChats = [
+      newChat,
+      ...chatHistory.map(chat => ({ ...chat, active: false }))
+    ];
     
-    // Reset messages to welcome message
-    setMessages([{
-      role: 'assistant',
-      content: 'Welcome to TriTech Enterprise Assistant\n\nI\'m your intelligent assistant for the Premium Pro Enterprise workbook with hybrid AI capabilities. I can handle both simple queries locally and complex analysis using advanced AI.\n\nSelect a product and ask me anything about TriTech Enterprise!',
-      source: 'system',
-      confidence: 'high'
-    }]);
+    setChatHistory(updatedChats);
+    setCurrentChatId(newChatId);
+    setMessages(newChat.messages);
+    saveChatHistory(updatedChats, newChatId, newChat.messages);
   };
 
   const handleChatSelect = (chatId) => {
-    setChatHistory(prev => 
-      prev.map(chat => ({ ...chat, active: chat.id === chatId }))
-    );
+    const updatedChats = chatHistory.map(chat => ({ 
+      ...chat, 
+      active: chat.id === chatId 
+    }));
     
-    // Reset to welcome message for demo purposes
-    setMessages([{
+    setChatHistory(updatedChats);
+    setCurrentChatId(chatId);
+    
+    const selectedChat = chatHistory.find(chat => chat.id === chatId);
+    const chatMessages = selectedChat?.messages || [{
       role: 'assistant',
       content: 'Welcome to TriTech Enterprise Assistant\n\nI\'m your intelligent assistant for the Premium Pro Enterprise workbook with hybrid AI capabilities. I can handle both simple queries locally and complex analysis using advanced AI.\n\nSelect a product and ask me anything about TriTech Enterprise!',
       source: 'system',
       confidence: 'high'
-    }]);
+    }];
+    
+    setMessages(chatMessages);
+    saveChatHistory(updatedChats, chatId, chatMessages);
+  };
+
+  const handleDeleteChat = (chatId, e) => {
+    e.stopPropagation();
+    
+    if (chatHistory.length <= 1) {
+      alert('Cannot delete the last chat. At least one chat must remain.');
+      return;
+    }
+    
+    const updatedChats = chatHistory.filter(chat => chat.id !== chatId);
+    
+    // If we're deleting the current chat, switch to the first remaining chat
+    if (chatId === currentChatId) {
+      const firstChat = updatedChats[0];
+      const updatedChatsWithActive = updatedChats.map((chat, index) => ({
+        ...chat,
+        active: index === 0
+      }));
+      
+      setChatHistory(updatedChatsWithActive);
+      setCurrentChatId(firstChat.id);
+      setMessages(firstChat.messages || [{
+        role: 'assistant',
+        content: 'Welcome to TriTech Enterprise Assistant\n\nI\'m your intelligent assistant for the Premium Pro Enterprise workbook with hybrid AI capabilities. I can handle both simple queries locally and complex analysis using advanced AI.\n\nSelect a product and ask me anything about TriTech Enterprise!',
+        source: 'system',
+        confidence: 'high'
+      }]);
+      saveChatHistory(updatedChatsWithActive, firstChat.id, firstChat.messages);
+    } else {
+      setChatHistory(updatedChats);
+      saveChatHistory(updatedChats, currentChatId, messages);
+    }
   };
 
   const formatMessage = (content) => {
@@ -455,40 +552,69 @@ export default function TriTechAssistant() {
           marginBottom: '24px'
         }}>
           {chatHistory.map((chat) => (
-            <button
+            <div
               key={chat.id}
-              onClick={() => handleChatSelect(chat.id)}
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '12px',
+                gap: '8px',
                 padding: '10px',
                 backgroundColor: chat.active ? currentTheme.chatLinkBg : 'transparent',
                 border: chat.active ? `1px solid ${currentTheme.chatLinkBorder}` : '1px solid transparent',
                 borderRadius: '8px',
-                color: chat.active ? currentTheme.accent : currentTheme.chatLinkText,
-                textDecoration: 'none',
-                fontWeight: chat.active ? '600' : '400',
-                fontSize: '14px',
-                cursor: 'pointer',
                 transition: 'all 0.2s ease',
-                textAlign: 'left',
-                width: '100%'
-              }}
-              onMouseEnter={(e) => {
-                if (!chat.active) {
-                  e.target.style.backgroundColor = currentTheme.chatLinkHover;
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!chat.active) {
-                  e.target.style.backgroundColor = 'transparent';
-                }
+                position: 'relative',
+                group: true
               }}
             >
-              <span style={{ fontSize: '16px' }}>{chat.icon}</span>
-              <span style={{ flex: 1, textAlign: 'left' }}>{chat.title}</span>
-            </button>
+              <button
+                onClick={() => handleChatSelect(chat.id)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  flex: 1,
+                  background: 'none',
+                  border: 'none',
+                  color: chat.active ? currentTheme.accent : currentTheme.chatLinkText,
+                  textDecoration: 'none',
+                  fontWeight: chat.active ? '600' : '400',
+                  fontSize: '14px',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  padding: 0
+                }}
+              >
+                <span style={{ fontSize: '16px' }}>{chat.icon}</span>
+                <span style={{ flex: 1, textAlign: 'left' }}>{chat.title}</span>
+              </button>
+              <button
+                onClick={(e) => handleDeleteChat(chat.id, e)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: currentTheme.textMuted,
+                  cursor: 'pointer',
+                  padding: '4px',
+                  borderRadius: '4px',
+                  opacity: 0.6,
+                  transition: 'all 0.2s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.color = currentTheme.deleteButton;
+                  e.target.style.opacity = '1';
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.color = currentTheme.textMuted;
+                  e.target.style.opacity = '0.6';
+                }}
+              >
+                <Icon name="Trash" size={14} />
+              </button>
+            </div>
           ))}
         </nav>
 
@@ -598,7 +724,7 @@ export default function TriTechAssistant() {
               <button 
                 onClick={() => setIsDarkMode(false)}
                 style={{
-                  padding: '4px 8px',
+                  padding: '6px 8px',
                   fontSize: '12px',
                   fontWeight: '600',
                   borderRadius: '4px',
@@ -608,7 +734,8 @@ export default function TriTechAssistant() {
                   backgroundColor: !isDarkMode ? currentTheme.accent : 'transparent',
                   color: !isDarkMode ? 'white' : currentTheme.textSecondary,
                   display: 'flex',
-                  alignItems: 'center'
+                  alignItems: 'center',
+                  justifyContent: 'center'
                 }}
               >
                 <Icon name="Sun" size={14} />
@@ -616,7 +743,7 @@ export default function TriTechAssistant() {
               <button 
                 onClick={() => setIsDarkMode(true)}
                 style={{
-                  padding: '4px 8px',
+                  padding: '6px 8px',
                   fontSize: '12px',
                   fontWeight: '600',
                   borderRadius: '4px',
@@ -626,7 +753,8 @@ export default function TriTechAssistant() {
                   backgroundColor: isDarkMode ? currentTheme.accent : 'transparent',
                   color: isDarkMode ? 'white' : currentTheme.textSecondary,
                   display: 'flex',
-                  alignItems: 'center'
+                  alignItems: 'center',
+                  justifyContent: 'center'
                 }}
               >
                 <Icon name="Moon" size={14} />
@@ -742,7 +870,7 @@ export default function TriTechAssistant() {
                       justifyContent: 'center',
                       flexShrink: 0
                     }}>
-                      <Icon name="Bot" size={18} color={currentTheme.textSecondary} />
+                      <Icon name="AIRobot" size={18} color={currentTheme.textSecondary} />
                     </div>
                   )}
                   
@@ -825,7 +953,7 @@ export default function TriTechAssistant() {
                 </div>
               )}
 
-              {/* Loading indicator */}
+              {/* Loading indicator with AI Robot */}
               {isLoading && (
                 <div style={{
                   display: 'flex',
@@ -842,7 +970,7 @@ export default function TriTechAssistant() {
                     justifyContent: 'center',
                     flexShrink: 0
                   }}>
-                    <Icon name="Bot" size={18} color={currentTheme.textSecondary} />
+                    <Icon name="AIRobot" size={18} color={currentTheme.textSecondary} />
                   </div>
                   <div style={{
                     backgroundColor: currentTheme.buttonBg,
@@ -866,7 +994,7 @@ export default function TriTechAssistant() {
                           />
                         ))}
                       </div>
-                      <span style={{ marginLeft: '8px' }}>Thinking...</span>
+                      <span style={{ marginLeft: '8px' }}>AI is thinking...</span>
                     </div>
                   </div>
                 </div>
