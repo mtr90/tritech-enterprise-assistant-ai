@@ -18,6 +18,12 @@ export default function TriTechAssistant() {
   const [apiStatus, setApiStatus] = useState('checking');
   const [isDarkMode, setIsDarkMode] = useState(true); // Theme state
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [chatHistory, setChatHistory] = useState([
+    { id: 1, title: 'Premium Tax', icon: '💰', active: true },
+    { id: 2, title: 'Premium Tax - Stage Error', icon: '⚠️', active: false },
+    { id: 3, title: 'Login issues after reset', icon: '🔒', active: false },
+    { id: 4, title: 'Multi-state calculations', icon: '🧮', active: false }
+  ]);
   const messagesEndRef = useRef(null);
 
   const products = {
@@ -81,7 +87,7 @@ export default function TriTechAssistant() {
     }
   };
 
-  // Modern theme colors
+  // Improved theme colors with better contrast
   const theme = {
     dark: {
       bg: '#0f172a',
@@ -96,11 +102,15 @@ export default function TriTechAssistant() {
       inputBg: '#1e293b',
       inputBorder: '#334155',
       accent: '#3b82f6',
-      accentHover: '#2563eb'
+      accentHover: '#2563eb',
+      chatLinkBg: 'rgba(59, 130, 246, 0.1)',
+      chatLinkBorder: 'rgba(59, 130, 246, 0.2)',
+      chatLinkText: '#f1f5f9',
+      chatLinkHover: '#334155'
     },
     light: {
       bg: '#f8fafc',
-      cardBg: 'rgba(255, 255, 255, 0.8)',
+      cardBg: 'rgba(255, 255, 255, 0.9)',
       sidebarBg: 'rgba(255, 255, 255, 0.95)',
       border: '#e2e8f0',
       text: '#1e293b',
@@ -111,7 +121,11 @@ export default function TriTechAssistant() {
       inputBg: '#ffffff',
       inputBorder: '#d1d5db',
       accent: '#3b82f6',
-      accentHover: '#2563eb'
+      accentHover: '#2563eb',
+      chatLinkBg: 'rgba(59, 130, 246, 0.05)',
+      chatLinkBorder: 'rgba(59, 130, 246, 0.15)',
+      chatLinkText: '#1e293b',
+      chatLinkHover: '#f1f5f9'
     }
   };
 
@@ -199,6 +213,44 @@ export default function TriTechAssistant() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleNewChat = () => {
+    const newChatId = chatHistory.length + 1;
+    const newChat = {
+      id: newChatId,
+      title: `New Chat ${newChatId}`,
+      icon: '💬',
+      active: false
+    };
+    
+    // Set all chats to inactive and add new chat as active
+    setChatHistory(prev => [
+      { ...newChat, active: true },
+      ...prev.map(chat => ({ ...chat, active: false }))
+    ]);
+    
+    // Reset messages to welcome message
+    setMessages([{
+      role: 'assistant',
+      content: 'Welcome to TriTech Enterprise Assistant\n\nI\'m your intelligent assistant for the Premium Pro Enterprise workbook with hybrid AI capabilities. I can handle both simple queries locally and complex analysis using advanced AI.\n\nSelect a product and ask me anything about TriTech Enterprise!',
+      source: 'system',
+      confidence: 'high'
+    }]);
+  };
+
+  const handleChatSelect = (chatId) => {
+    setChatHistory(prev => 
+      prev.map(chat => ({ ...chat, active: chat.id === chatId }))
+    );
+    
+    // Reset to welcome message for demo purposes
+    setMessages([{
+      role: 'assistant',
+      content: 'Welcome to TriTech Enterprise Assistant\n\nI\'m your intelligent assistant for the Premium Pro Enterprise workbook with hybrid AI capabilities. I can handle both simple queries locally and complex analysis using advanced AI.\n\nSelect a product and ask me anything about TriTech Enterprise!',
+      source: 'system',
+      confidence: 'high'
+    }]);
   };
 
   const formatMessage = (content) => {
@@ -371,15 +423,23 @@ export default function TriTechAssistant() {
           }}>
             Previous Chats
           </h2>
-          <button style={{
-            background: 'none',
-            border: 'none',
-            color: currentTheme.textSecondary,
-            cursor: 'pointer',
-            padding: '4px',
-            borderRadius: '4px',
-            transition: 'color 0.2s ease'
-          }}>
+          <button 
+            onClick={handleNewChat}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: currentTheme.textSecondary,
+              cursor: 'pointer',
+              padding: '4px',
+              borderRadius: '4px',
+              transition: 'color 0.2s ease',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+            onMouseEnter={(e) => e.target.style.color = currentTheme.text}
+            onMouseLeave={(e) => e.target.style.color = currentTheme.textSecondary}
+          >
             <Icon name="Plus" size={16} />
           </button>
         </div>
@@ -394,46 +454,41 @@ export default function TriTechAssistant() {
           paddingRight: '8px',
           marginBottom: '24px'
         }}>
-          <a href="#" style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '12px',
-            padding: '10px',
-            backgroundColor: isDarkMode ? 'rgba(59, 130, 246, 0.2)' : 'rgba(59, 130, 246, 0.1)',
-            border: `1px solid ${isDarkMode ? 'rgba(59, 130, 246, 0.3)' : 'rgba(59, 130, 246, 0.2)'}`,
-            borderRadius: '8px',
-            color: isDarkMode ? 'white' : currentTheme.accent,
-            textDecoration: 'none',
-            fontWeight: '600',
-            fontSize: '14px'
-          }}>
-            <span style={{ fontSize: '16px' }}>{currentProduct.icon}</span>
-            <span>{currentProduct.title}</span>
-          </a>
-          
-          {[
-            { icon: '⚠️', text: 'Premium Tax - Stage Error' },
-            { icon: '🔒', text: 'Login issues after reset' },
-            { icon: '🧮', text: 'Multi-state calculations' }
-          ].map((item, index) => (
-            <a key={index} href="#" style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px',
-              padding: '10px',
-              borderRadius: '8px',
-              color: currentTheme.textSecondary,
-              textDecoration: 'none',
-              fontSize: '14px',
-              transition: 'background-color 0.2s ease',
-              backgroundColor: 'transparent'
-            }}
-            onMouseEnter={(e) => e.target.style.backgroundColor = currentTheme.buttonHover}
-            onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+          {chatHistory.map((chat) => (
+            <button
+              key={chat.id}
+              onClick={() => handleChatSelect(chat.id)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                padding: '10px',
+                backgroundColor: chat.active ? currentTheme.chatLinkBg : 'transparent',
+                border: chat.active ? `1px solid ${currentTheme.chatLinkBorder}` : '1px solid transparent',
+                borderRadius: '8px',
+                color: chat.active ? currentTheme.accent : currentTheme.chatLinkText,
+                textDecoration: 'none',
+                fontWeight: chat.active ? '600' : '400',
+                fontSize: '14px',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                textAlign: 'left',
+                width: '100%'
+              }}
+              onMouseEnter={(e) => {
+                if (!chat.active) {
+                  e.target.style.backgroundColor = currentTheme.chatLinkHover;
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!chat.active) {
+                  e.target.style.backgroundColor = 'transparent';
+                }
+              }}
             >
-              <span style={{ fontSize: '16px' }}>{item.icon}</span>
-              <span>{item.text}</span>
-            </a>
+              <span style={{ fontSize: '16px' }}>{chat.icon}</span>
+              <span style={{ flex: 1, textAlign: 'left' }}>{chat.title}</span>
+            </button>
           ))}
         </nav>
 
