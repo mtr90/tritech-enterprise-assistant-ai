@@ -263,19 +263,9 @@ ${originalResponse.split('\n')[0] || 'Issue analysis in progress...'}
 • The system should provide clear feedback on actions
 • Error handling should be graceful and informative
 • The feature should work consistently across different scenarios
-
-**Technical Requirements:**
-• Implementation should follow existing system patterns
-• Code should be well-documented and maintainable
-• Testing should cover all acceptance criteria
-• Performance should meet system standards
-
-**Definition of Done:**
-• All acceptance criteria are met
-• Code is reviewed and approved
-• Tests are written and passing
-• Documentation is updated
-• Feature is deployed and verified`;
+• The interface should be accessible and user-friendly
+• The feature should integrate seamlessly with existing functionality
+• Performance should meet expected response time standards`;
 
     return userStory;
   };
@@ -285,30 +275,18 @@ ${originalResponse.split('\n')[0] || 'Issue analysis in progress...'}
     
     const bugReport = `**${cleanTitle}**
 
-**Description:**
+**Root Cause Analysis:**
 ${originalResponse}
 
-**Steps to Reproduce:**
-1. Navigate to the affected area
-2. Perform the action that triggers the issue
-3. Observe the unexpected behavior
-
-**Actual Result:** 
-The system does not behave as expected
-
-**Expected Result:** 
-The system should function correctly according to specifications
-
-**Environment:**
-• Browser: [Browser version]
-• OS: [Operating system]
-• Product: ${selectedProduct}
-
-**Priority:** Medium
-**Severity:** Medium
-
-**Additional Notes:**
-Please provide any additional context or screenshots that might help with debugging.`;
+**AI Recommendations:**
+Based on the analysis above, here are the suggested actions to resolve this issue:
+• Investigate the specific component or module mentioned
+• Check recent changes or updates that might have caused this issue
+• Verify configuration settings and data integrity
+• Test with different scenarios to isolate the problem
+• Review logs and error messages for additional context
+• Consider rollback options if recent changes are the cause
+• Implement proper error handling and user feedback`;
 
     return bugReport;
   };
