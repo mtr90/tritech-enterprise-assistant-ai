@@ -15,7 +15,8 @@ export default function TriTechAssistant() {
   const [isLoading, setIsLoading] = useState(false);
   const [forceMode, setForceMode] = useState('ai'); // 'local', 'ai'
   const [selectedProduct, setSelectedProduct] = useState('Premium Tax');
-  const [analysisMode, setAnalysisMode] = useState('general'); // 'general', 'bug'
+  const [analysisMode, setAnalysisMode] = useState('general'); // 'general', 'bug', 'format'
+  const [formatType, setFormatType] = useState('user_story'); // 'user_story', 'bug_report'
   const [apiStatus, setApiStatus] = useState('checking');
   const [isDarkMode, setIsDarkMode] = useState(true); // Theme state
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -217,7 +218,7 @@ export default function TriTechAssistant() {
       return originalResponse;
     }
 
-    // Generate structured bug analysis format
+    // Generate structured bug analysis format (no original analysis)
     const bugAnalysis = `🔍 **ROOT CAUSE ANALYSIS**
 ${originalResponse.split('\n')[0] || 'Issue analysis in progress...'}
 
@@ -244,12 +245,72 @@ ${originalResponse.split('\n')[0] || 'Issue analysis in progress...'}
 2. Compare with working examples or previous versions
 3. Test edge cases and boundary conditions
 4. Verify fix doesn't introduce new issues
-5. Document resolution for future reference
-
-**Original Analysis:**
-${originalResponse}`;
+5. Document resolution for future reference`;
 
     return bugAnalysis;
+  };
+
+  const formatUserStory = (originalResponse, title) => {
+    const cleanTitle = title || 'Feature Request';
+    
+    const userStory = `**${cleanTitle}:**
+
+**User Story:** As a user, I want ${originalResponse.toLowerCase().replace(/^i want to |^i need to |^i would like to /i, '')}, so that I can achieve my goals efficiently.
+
+**Acceptance Criteria:**
+• When I interact with the system, it should respond appropriately
+• The feature should be intuitive and easy to use
+• The system should provide clear feedback on actions
+• Error handling should be graceful and informative
+• The feature should work consistently across different scenarios
+
+**Technical Requirements:**
+• Implementation should follow existing system patterns
+• Code should be well-documented and maintainable
+• Testing should cover all acceptance criteria
+• Performance should meet system standards
+
+**Definition of Done:**
+• All acceptance criteria are met
+• Code is reviewed and approved
+• Tests are written and passing
+• Documentation is updated
+• Feature is deployed and verified`;
+
+    return userStory;
+  };
+
+  const formatBugReport = (originalResponse, title) => {
+    const cleanTitle = title || 'Bug Report';
+    
+    const bugReport = `**${cleanTitle}**
+
+**Description:**
+${originalResponse}
+
+**Steps to Reproduce:**
+1. Navigate to the affected area
+2. Perform the action that triggers the issue
+3. Observe the unexpected behavior
+
+**Actual Result:** 
+The system does not behave as expected
+
+**Expected Result:** 
+The system should function correctly according to specifications
+
+**Environment:**
+• Browser: [Browser version]
+• OS: [Operating system]
+• Product: ${selectedProduct}
+
+**Priority:** Medium
+**Severity:** Medium
+
+**Additional Notes:**
+Please provide any additional context or screenshots that might help with debugging.`;
+
+    return bugReport;
   };
 
   const handleSubmit = async (e, questionText = null) => {
@@ -271,7 +332,9 @@ ${originalResponse}`;
           message: messageText,
           forceMode: forceMode,
           analysisMode: analysisMode,
-          selectedProduct: selectedProduct
+          selectedProduct: selectedProduct,
+          formatType: formatType,
+          responseStyle: analysisMode === 'general' ? 'concise' : 'detailed'
         })
       });
 
@@ -281,9 +344,20 @@ ${originalResponse}`;
       
       // Format response based on analysis mode
       let formattedContent = data.response;
+      let currentAnalysisMode = analysisMode;
+      
       if (analysisMode === 'bug') {
         formattedContent = formatBugAnalysis(data.response);
+      } else if (analysisMode === 'format') {
+        if (formatType === 'user_story') {
+          formattedContent = formatUserStory(data.response, messageText);
+          currentAnalysisMode = 'user_story';
+        } else if (formatType === 'bug_report') {
+          formattedContent = formatBugReport(data.response, messageText);
+          currentAnalysisMode = 'bug_report';
+        }
       }
+      // For general mode, keep response as is (should be concise from API)
       
       const assistantMessage = {
         role: 'assistant',
@@ -291,7 +365,8 @@ ${originalResponse}`;
         source: data.source,
         confidence: data.confidence,
         relatedTopics: data.relatedTopics,
-        analysisMode: analysisMode
+        analysisMode: currentAnalysisMode,
+        formatType: formatType
       };
 
       const finalMessages = [...newMessages, assistantMessage];
@@ -474,6 +549,42 @@ ${originalResponse}`;
           fontWeight: '500' 
         }}>
           🐛 Bug Analysis
+        </span>
+      );
+    }
+    
+    if (messageAnalysisMode === 'user_story') {
+      badges.push(
+        <span key="user_story" style={{ 
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '4px',
+          backgroundColor: '#8b5cf6', 
+          color: 'white', 
+          padding: '4px 8px', 
+          borderRadius: '8px', 
+          fontSize: '12px', 
+          fontWeight: '500' 
+        }}>
+          📋 User Story
+        </span>
+      );
+    }
+    
+    if (messageAnalysisMode === 'bug_report') {
+      badges.push(
+        <span key="bug_report" style={{ 
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '4px',
+          backgroundColor: '#8b5cf6', 
+          color: 'white', 
+          padding: '4px 8px', 
+          borderRadius: '8px', 
+          fontSize: '12px', 
+          fontWeight: '500' 
+        }}>
+          📋 Bug Report
         </span>
       );
     }
@@ -793,17 +904,17 @@ ${originalResponse}`;
             <div style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '4px',
+              gap: '2px',
               backgroundColor: currentTheme.buttonBg,
-              padding: '4px',
+              padding: '2px',
               borderRadius: '6px',
               border: `1px solid ${currentTheme.border}`
             }}>
               <button 
                 onClick={() => setAnalysisMode('general')}
                 style={{
-                  padding: '4px 8px',
-                  fontSize: '12px',
+                  padding: '4px 6px',
+                  fontSize: '11px',
                   fontWeight: '600',
                   borderRadius: '4px',
                   border: 'none',
@@ -818,8 +929,8 @@ ${originalResponse}`;
               <button 
                 onClick={() => setAnalysisMode('bug')}
                 style={{
-                  padding: '4px 8px',
-                  fontSize: '12px',
+                  padding: '4px 6px',
+                  fontSize: '11px',
                   fontWeight: '600',
                   borderRadius: '4px',
                   border: 'none',
@@ -831,8 +942,83 @@ ${originalResponse}`;
               >
                 Bug
               </button>
+              <button 
+                onClick={() => setAnalysisMode('format')}
+                style={{
+                  padding: '4px 6px',
+                  fontSize: '11px',
+                  fontWeight: '600',
+                  borderRadius: '4px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  backgroundColor: analysisMode === 'format' ? currentTheme.accent : 'transparent',
+                  color: analysisMode === 'format' ? 'white' : currentTheme.textSecondary
+                }}
+              >
+                Format
+              </button>
             </div>
           </div>
+
+          {/* Format Type (only show when Format mode is selected) */}
+          {analysisMode === 'format' && (
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              padding: '10px',
+              borderRadius: '8px',
+              marginBottom: '8px',
+              backgroundColor: currentTheme.chatLinkBg,
+              border: `1px solid ${currentTheme.chatLinkBorder}`,
+              transition: 'background-color 0.2s ease'
+            }}>
+              <span style={{ fontSize: '14px', fontWeight: '500', color: currentTheme.text }}>Template</span>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                backgroundColor: currentTheme.buttonBg,
+                padding: '4px',
+                borderRadius: '6px',
+                border: `1px solid ${currentTheme.border}`
+              }}>
+                <button 
+                  onClick={() => setFormatType('user_story')}
+                  style={{
+                    padding: '4px 8px',
+                    fontSize: '12px',
+                    fontWeight: '600',
+                    borderRadius: '4px',
+                    border: 'none',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    backgroundColor: formatType === 'user_story' ? currentTheme.accent : 'transparent',
+                    color: formatType === 'user_story' ? 'white' : currentTheme.textSecondary
+                  }}
+                >
+                  User Story
+                </button>
+                <button 
+                  onClick={() => setFormatType('bug_report')}
+                  style={{
+                    padding: '4px 8px',
+                    fontSize: '12px',
+                    fontWeight: '600',
+                    borderRadius: '4px',
+                    border: 'none',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    backgroundColor: formatType === 'bug_report' ? currentTheme.accent : 'transparent',
+                    color: formatType === 'bug_report' ? 'white' : currentTheme.textSecondary
+                  }}
+                >
+                  Bug Report
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Theme Toggle */}
           <div style={{
@@ -938,14 +1124,16 @@ ${originalResponse}`;
             <span style={{ 
               fontSize: '12px', 
               color: 'white',
-              backgroundColor: analysisMode === 'bug' ? '#ef4444' : currentTheme.accent,
+              backgroundColor: analysisMode === 'bug' ? '#ef4444' : analysisMode === 'format' ? '#8b5cf6' : currentTheme.accent,
               padding: '4px 8px',
               borderRadius: '6px',
               fontWeight: '600',
               textTransform: 'uppercase',
               letterSpacing: '0.5px'
             }}>
-              {analysisMode === 'bug' ? '🐛 Bug Analysis' : '💬 General'}
+              {analysisMode === 'bug' ? '🐛 Bug Analysis' : 
+               analysisMode === 'format' ? `📋 ${formatType === 'user_story' ? 'User Story' : 'Bug Report'}` : 
+               '💬 General'}
             </span>
             <span style={{ fontSize: '14px', color: currentTheme.textSecondary }}>
               AI Enhanced - {currentProduct.description}
