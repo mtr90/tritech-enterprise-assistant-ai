@@ -13,10 +13,11 @@ export default function TriTechAssistant() {
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [forceMode, setForceMode] = useState('local'); // 'local', 'ai'
+  const [forceMode, setForceMode] = useState('ai'); // 'local', 'ai'
   const [selectedProduct, setSelectedProduct] = useState('Premium');
   const [apiStatus, setApiStatus] = useState('checking');
   const [isDarkMode, setIsDarkMode] = useState(true); // Theme state
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const messagesEndRef = useRef(null);
 
   const products = {
@@ -80,35 +81,58 @@ export default function TriTechAssistant() {
     }
   };
 
-  // Theme colors
+  // Modern theme colors
   const theme = {
     dark: {
       bg: '#0f172a',
-      cardBg: '#1e293b',
+      cardBg: 'rgba(15, 23, 42, 0.8)',
+      sidebarBg: 'rgba(15, 23, 42, 0.95)',
       border: '#334155',
-      text: 'white',
+      text: '#f1f5f9',
       textSecondary: '#94a3b8',
       textMuted: '#64748b',
-      buttonBg: '#374151',
-      buttonHover: '#4a5568',
-      inputBg: '#374151',
-      inputBorder: '#4a5568'
+      buttonBg: '#1e293b',
+      buttonHover: '#334155',
+      inputBg: '#1e293b',
+      inputBorder: '#334155',
+      accent: '#3b82f6',
+      accentHover: '#2563eb'
     },
     light: {
       bg: '#f8fafc',
-      cardBg: 'white',
+      cardBg: 'rgba(255, 255, 255, 0.8)',
+      sidebarBg: 'rgba(255, 255, 255, 0.95)',
       border: '#e2e8f0',
       text: '#1e293b',
       textSecondary: '#475569',
       textMuted: '#64748b',
       buttonBg: '#f1f5f9',
       buttonHover: '#e2e8f0',
-      inputBg: 'white',
-      inputBorder: '#d1d5db'
+      inputBg: '#ffffff',
+      inputBorder: '#d1d5db',
+      accent: '#3b82f6',
+      accentHover: '#2563eb'
     }
   };
 
   const currentTheme = isDarkMode ? theme.dark : theme.light;
+
+  // Icon components (simplified inline SVG)
+  const Icon = ({ name, size = 20, color = 'currentColor', ...props }) => {
+    const icons = {
+      Menu: <svg width={size} height={size} fill="none" stroke={color} viewBox="0 0 24 24" {...props}><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>,
+      Sun: <svg width={size} height={size} fill="none" stroke={color} viewBox="0 0 24 24" {...props}><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>,
+      Moon: <svg width={size} height={size} fill="none" stroke={color} viewBox="0 0 24 24" {...props}><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>,
+      Zap: <svg width={size} height={size} fill="none" stroke={color} viewBox="0 0 24 24" {...props}><polygon points="13,2 3,14 12,14 11,22 21,10 12,10 13,2"/></svg>,
+      Bot: <svg width={size} height={size} fill="none" stroke={color} viewBox="0 0 24 24" {...props}><rect x="3" y="11" width="18" height="10" rx="2" ry="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4"/><line x1="8" y1="16" x2="8" y2="16"/><line x1="16" y1="16" x2="16" y2="16"/></svg>,
+      User: <svg width={size} height={size} fill="none" stroke={color} viewBox="0 0 24 24" {...props}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>,
+      Send: <svg width={size} height={size} fill="none" stroke={color} viewBox="0 0 24 24" {...props}><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22,2 15,22 11,13 2,9 22,2"/></svg>,
+      Plus: <svg width={size} height={size} fill="none" stroke={color} viewBox="0 0 24 24" {...props}><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>,
+      ShieldCheck: <svg width={size} height={size} fill="none" stroke={color} viewBox="0 0 24 24" {...props}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>,
+      ChevronDown: <svg width={size} height={size} fill="none" stroke={color} viewBox="0 0 24 24" {...props}><polyline points="6,9 12,15 18,9"/></svg>
+    };
+    return icons[name] || <div style={{width: size, height: size}}></div>;
+  };
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -180,7 +204,7 @@ export default function TriTechAssistant() {
   const formatMessage = (content) => {
     return content.split('\n').map((line, index) => {
       if (line.startsWith('**') && line.endsWith('**')) {
-        return <div key={index} style={{ fontWeight: 'bold', color: '#3b82f6', marginTop: '12px', marginBottom: '8px' }}>{line.slice(2, -2)}</div>;
+        return <div key={index} style={{ fontWeight: 'bold', color: currentTheme.accent, marginTop: '12px', marginBottom: '8px' }}>{line.slice(2, -2)}</div>;
       }
       if (line.startsWith('• ')) {
         return <div key={index} style={{ marginLeft: '16px', marginBottom: '4px' }}>• {line.slice(2)}</div>;
@@ -194,52 +218,45 @@ export default function TriTechAssistant() {
 
   const getSourceBadge = (source) => {
     if (source === 'ai') {
-      return <span style={{ 
-        backgroundColor: '#10b981', 
-        color: 'white', 
-        padding: '2px 8px', 
-        borderRadius: '12px', 
-        fontSize: '12px', 
-        fontWeight: '500' 
-      }}>🧠 AI Enhanced</span>;
+      return (
+        <span style={{ 
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '4px',
+          backgroundColor: '#10b981', 
+          color: 'white', 
+          padding: '4px 8px', 
+          borderRadius: '8px', 
+          fontSize: '12px', 
+          fontWeight: '500' 
+        }}>
+          <Icon name="Zap" size={12} color="white" />
+          AI Enhanced
+        </span>
+      );
     }
     if (source === 'local') {
-      return <span style={{ 
-        backgroundColor: '#3b82f6', 
-        color: 'white', 
-        padding: '2px 8px', 
-        borderRadius: '12px', 
-        fontSize: '12px', 
-        fontWeight: '500' 
-      }}>⚡ Fast Local</span>;
+      return (
+        <span style={{ 
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '4px',
+          backgroundColor: currentTheme.accent, 
+          color: 'white', 
+          padding: '4px 8px', 
+          borderRadius: '8px', 
+          fontSize: '12px', 
+          fontWeight: '500' 
+        }}>
+          <Icon name="Zap" size={12} color="white" />
+          Fast Local
+        </span>
+      );
     }
     return null;
   };
 
-  const getModeToggleStyle = (mode) => ({
-    padding: '8px 16px',
-    borderRadius: '8px',
-    border: 'none',
-    cursor: 'pointer',
-    fontSize: '13px',
-    fontWeight: '500',
-    backgroundColor: forceMode === mode ? '#3b82f6' : currentTheme.buttonBg,
-    color: forceMode === mode ? 'white' : currentTheme.text,
-    transition: 'all 0.2s ease',
-    minWidth: '80px'
-  });
-
-  const getProductButtonStyle = (productKey) => ({
-    padding: '12px 16px',
-    backgroundColor: selectedProduct === productKey ? '#3b82f6' : currentTheme.buttonBg,
-    border: selectedProduct === productKey ? '2px solid #60a5fa' : `1px solid ${currentTheme.border}`,
-    borderRadius: '8px',
-    cursor: 'pointer',
-    transition: 'all 0.2s ease',
-    textAlign: 'center',
-    color: selectedProduct === productKey ? 'white' : currentTheme.text,
-    fontSize: '13px'
-  });
+  const currentProduct = products[selectedProduct];
 
   return (
     <div style={{ 
@@ -247,355 +264,572 @@ export default function TriTechAssistant() {
       height: '100vh', 
       backgroundColor: currentTheme.bg, 
       color: currentTheme.text,
-      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+      fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+      WebkitFontSmoothing: 'antialiased',
+      MozOsxFontSmoothing: 'grayscale'
     }}>
       
-      {/* Left Sidebar - Always Visible */}
-      <div style={{ 
+      {/* Sidebar */}
+      <aside style={{ 
         width: '320px',
-        backgroundColor: currentTheme.cardBg,
+        backgroundColor: currentTheme.sidebarBg,
+        backdropFilter: 'blur(8px)',
+        WebkitBackdropFilter: 'blur(8px)',
         borderRight: `1px solid ${currentTheme.border}`,
         display: 'flex',
         flexDirection: 'column',
-        overflow: 'auto'
+        padding: '16px',
+        transform: sidebarOpen ? 'translateX(0)' : 'translateX(-100%)',
+        transition: 'transform 0.3s ease-in-out',
+        position: 'relative',
+        zIndex: 1000,
+        height: '100vh'
       }}>
         
         {/* Header */}
         <div style={{ 
-          padding: '20px',
-          borderBottom: `1px solid ${currentTheme.border}`,
-          textAlign: 'center'
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: '12px', 
+          marginBottom: '32px' 
         }}>
+          <div style={{ 
+            backgroundColor: currentTheme.accent, 
+            padding: '8px', 
+            borderRadius: '8px' 
+          }}>
+            <Icon name="Zap" size={24} color="white" />
+          </div>
           <h1 style={{ 
-            margin: '0 0 8px 0', 
             fontSize: '20px', 
             fontWeight: '700',
-            background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            backgroundClip: 'text'
+            color: currentTheme.text,
+            margin: 0
           }}>
-            🔧 TriTech Assistant
+            TriTech Assistant
           </h1>
-          <p style={{ 
-            fontSize: '12px', 
-            color: currentTheme.textSecondary, 
-            margin: '0 0 12px 0' 
-          }}>
-            AI-Powered Enterprise Analysis
-          </p>
-          
-          {/* Theme Toggle */}
-          <div style={{ 
-            display: 'flex', 
-            justifyContent: 'center', 
-            marginBottom: '12px' 
-          }}>
-            <button
-              onClick={() => setIsDarkMode(!isDarkMode)}
-              style={{
-                padding: '6px 12px',
-                borderRadius: '20px',
-                border: `1px solid ${currentTheme.border}`,
-                backgroundColor: currentTheme.buttonBg,
-                color: currentTheme.text,
-                fontSize: '12px',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px'
-              }}
-            >
-              {isDarkMode ? '☀️ Light' : '🌙 Dark'}
-            </button>
-          </div>
-          
-          {/* Status Badge */}
-          <div style={{ 
-            display: 'inline-flex',
-            alignItems: 'center',
-            padding: '4px 12px', 
-            backgroundColor: apiStatus === 'ready' ? '#10b981' : '#d97706', 
-            borderRadius: '16px', 
-            fontSize: '11px', 
-            fontWeight: '500',
-            color: 'white'
-          }}>
-            {apiStatus === 'ready' ? '✅ Hybrid AI Ready' : '⚡ Local Mode Only'}
-          </div>
         </div>
 
         {/* Product Selection */}
-        <div style={{ padding: '20px', borderBottom: `1px solid ${currentTheme.border}` }}>
-          <h3 style={{ 
-            margin: '0 0 16px 0', 
+        <div style={{ marginBottom: '24px' }}>
+          <label style={{ 
             fontSize: '14px', 
-            fontWeight: '600',
-            color: currentTheme.text
+            fontWeight: '500', 
+            color: currentTheme.textSecondary, 
+            marginBottom: '8px', 
+            display: 'block' 
           }}>
             Select Product
-          </h3>
-          
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {Object.entries(products).map(([key, product]) => (
-              <button
-                key={key}
-                onClick={() => setSelectedProduct(key)}
-                style={getProductButtonStyle(key)}
-                onMouseEnter={(e) => {
-                  if (selectedProduct !== key) {
-                    e.target.style.backgroundColor = currentTheme.buttonHover;
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (selectedProduct !== key) {
-                    e.target.style.backgroundColor = currentTheme.buttonBg;
-                  }
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span style={{ fontSize: '16px' }}>{product.icon}</span>
-                  <div style={{ textAlign: 'left' }}>
-                    <div style={{ fontWeight: '600' }}>{product.title}</div>
-                    <div style={{ fontSize: '11px', color: currentTheme.textSecondary }}>{product.description}</div>
-                  </div>
-                </div>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Mode Toggle */}
-        <div style={{ padding: '20px', borderBottom: `1px solid ${currentTheme.border}` }}>
-          <h3 style={{ 
-            margin: '0 0 12px 0', 
-            fontSize: '14px', 
-            fontWeight: '600',
-            color: currentTheme.text
-          }}>
-            Response Mode
-          </h3>
-          
-          <div style={{ display: 'flex', gap: '8px' }}>
-            <button 
-              onClick={() => setForceMode('local')}
-              style={getModeToggleStyle('local')}
+          </label>
+          <div style={{ position: 'relative' }}>
+            <select 
+              value={selectedProduct}
+              onChange={(e) => setSelectedProduct(e.target.value)}
+              style={{
+                width: '100%',
+                backgroundColor: currentTheme.buttonBg,
+                border: `1px solid ${currentTheme.border}`,
+                borderRadius: '8px',
+                padding: '10px 12px',
+                color: currentTheme.text,
+                fontSize: '14px',
+                outline: 'none',
+                appearance: 'none',
+                cursor: 'pointer'
+              }}
             >
-              ⚡ Local
-            </button>
-            <button 
-              onClick={() => setForceMode('ai')}
-              style={getModeToggleStyle('ai')}
-            >
-              🧠 AI
-            </button>
-          </div>
-          
-          <div style={{ fontSize: '11px', color: currentTheme.textMuted, marginTop: '8px' }}>
-            {forceMode === 'local' && 'Fast responses from knowledge base'}
-            {forceMode === 'ai' && 'AI-enhanced detailed analysis'}
-          </div>
-        </div>
-
-        {/* Sample Questions */}
-        <div style={{ flex: 1, padding: '20px' }}>
-          <h3 style={{ 
-            margin: '0 0 16px 0', 
-            fontSize: '14px', 
-            fontWeight: '600',
-            color: '#ef4444'
-          }}>
-            🔥 Sample Questions
-          </h3>
-          
-          <div style={{ 
-            display: 'flex', 
-            flexDirection: 'column', 
-            gap: '8px',
-            maxHeight: selectedProduct === 'ClickUp Current Bugs' ? '400px' : '300px',
-            overflowY: 'auto',
-            border: `1px solid ${currentTheme.border}`,
-            borderRadius: '8px',
-            padding: '8px'
-          }}>
-            {products[selectedProduct].questions.map((question, index) => (
-              <button
-                key={index}
-                onClick={(e) => handleSubmit(e, question)}
-                style={{
-                  padding: '10px 12px',
-                  backgroundColor: currentTheme.buttonBg,
-                  border: `1px solid ${currentTheme.border}`,
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  fontSize: '12px',
-                  color: currentTheme.text,
-                  transition: 'all 0.2s ease',
-                  textAlign: 'left'
-                }}
-                onMouseEnter={(e) => {
-                  e.target.style.backgroundColor = currentTheme.buttonHover;
-                  e.target.style.borderColor = '#3b82f6';
-                }}
-                onMouseLeave={(e) => {
-                  e.target.style.backgroundColor = currentTheme.buttonBg;
-                  e.target.style.borderColor = currentTheme.border;
-                }}
-              >
-                {question}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Admin Link */}
-        <div style={{ 
-          padding: '20px', 
-          borderTop: `1px solid ${currentTheme.border}`,
-          textAlign: 'center'
-        }}>
-          <a
-            href="/admin"
-            target="_blank"
-            style={{
-              padding: '8px 16px',
-              backgroundColor: '#8b5cf6',
-              color: 'white',
-              borderRadius: '8px',
-              textDecoration: 'none',
-              fontSize: '12px',
-              fontWeight: '500',
-              display: 'inline-block'
-            }}
-          >
-            🛠️ Admin Dashboard
-          </a>
-        </div>
-      </div>
-
-      {/* Main Chat Area */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-        
-        {/* Chat Header */}
-        <div style={{ 
-          padding: '16px 24px', 
-          borderBottom: `1px solid ${currentTheme.border}`,
-          backgroundColor: currentTheme.cardBg
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div>
-              <h2 style={{ 
-                margin: '0', 
-                fontSize: '18px', 
-                fontWeight: '600',
-                color: currentTheme.text
-              }}>
-                {products[selectedProduct].icon} {products[selectedProduct].title}
-              </h2>
-              <p style={{ 
-                margin: '4px 0 0 0', 
-                fontSize: '13px', 
-                color: currentTheme.textSecondary 
-              }}>
-                Mode: {forceMode === 'local' ? '⚡ Fast Local' : '🧠 AI Enhanced'} • {products[selectedProduct].description}
-              </p>
+              {Object.entries(products).map(([key, product]) => (
+                <option key={key} value={key}>{product.title}</option>
+              ))}
+            </select>
+            <div style={{
+              position: 'absolute',
+              right: '12px',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              pointerEvents: 'none'
+            }}>
+              <Icon name="ChevronDown" size={16} color={currentTheme.textSecondary} />
             </div>
           </div>
         </div>
+
+        {/* Previous Chats Header */}
+        <div style={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'space-between', 
+          marginBottom: '16px' 
+        }}>
+          <h2 style={{ 
+            fontSize: '12px', 
+            fontWeight: '600',
+            color: currentTheme.textSecondary,
+            textTransform: 'uppercase',
+            letterSpacing: '0.05em',
+            margin: 0
+          }}>
+            Previous Chats
+          </h2>
+          <button style={{
+            background: 'none',
+            border: 'none',
+            color: currentTheme.textSecondary,
+            cursor: 'pointer',
+            padding: '4px',
+            borderRadius: '4px',
+            transition: 'color 0.2s ease'
+          }}>
+            <Icon name="Plus" size={16} />
+          </button>
+        </div>
+
+        {/* Chat History */}
+        <nav style={{ 
+          flex: 1, 
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '8px',
+          overflowY: 'auto',
+          paddingRight: '8px',
+          marginBottom: '24px'
+        }}>
+          <a href="#" style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+            padding: '10px',
+            backgroundColor: isDarkMode ? 'rgba(59, 130, 246, 0.2)' : 'rgba(59, 130, 246, 0.1)',
+            border: `1px solid ${isDarkMode ? 'rgba(59, 130, 246, 0.3)' : 'rgba(59, 130, 246, 0.2)'}`,
+            borderRadius: '8px',
+            color: isDarkMode ? 'white' : currentTheme.accent,
+            textDecoration: 'none',
+            fontWeight: '600',
+            fontSize: '14px'
+          }}>
+            <span style={{ fontSize: '16px' }}>{currentProduct.icon}</span>
+            <span>{currentProduct.title}</span>
+          </a>
+          
+          {[
+            { icon: '⚠️', text: 'Premium Tax - Stage Error' },
+            { icon: '🔒', text: 'Login issues after reset' },
+            { icon: '🧮', text: 'Multi-state calculations' }
+          ].map((item, index) => (
+            <a key={index} href="#" style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              padding: '10px',
+              borderRadius: '8px',
+              color: currentTheme.textSecondary,
+              textDecoration: 'none',
+              fontSize: '14px',
+              transition: 'background-color 0.2s ease',
+              backgroundColor: 'transparent'
+            }}
+            onMouseEnter={(e) => e.target.style.backgroundColor = currentTheme.buttonHover}
+            onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+            >
+              <span style={{ fontSize: '16px' }}>{item.icon}</span>
+              <span>{item.text}</span>
+            </a>
+          ))}
+        </nav>
+
+        {/* Sidebar Footer */}
+        <div style={{ 
+          paddingTop: '16px', 
+          borderTop: `1px solid ${currentTheme.border}` 
+        }}>
+          {/* Status Badge */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            backgroundColor: isDarkMode ? 'rgba(16, 185, 129, 0.1)' : 'rgba(16, 185, 129, 0.1)',
+            border: `1px solid ${isDarkMode ? 'rgba(16, 185, 129, 0.2)' : 'rgba(16, 185, 129, 0.2)'}`,
+            color: isDarkMode ? '#10b981' : '#059669',
+            borderRadius: '8px',
+            padding: '12px 16px',
+            marginBottom: '16px'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Icon name="ShieldCheck" size={16} />
+              <span style={{ fontSize: '14px', fontWeight: '500' }}>Hybrid AI Ready</span>
+            </div>
+            <div style={{
+              width: '8px',
+              height: '8px',
+              borderRadius: '50%',
+              backgroundColor: '#10b981',
+              animation: 'pulse 2s infinite'
+            }}></div>
+          </div>
+
+          {/* Response Mode */}
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            padding: '10px',
+            borderRadius: '8px',
+            marginBottom: '8px',
+            transition: 'background-color 0.2s ease'
+          }}>
+            <span style={{ fontSize: '14px', fontWeight: '500', color: currentTheme.text }}>Response Mode</span>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              backgroundColor: currentTheme.buttonBg,
+              padding: '4px',
+              borderRadius: '6px',
+              border: `1px solid ${currentTheme.border}`
+            }}>
+              <button 
+                onClick={() => setForceMode('local')}
+                style={{
+                  padding: '4px 8px',
+                  fontSize: '12px',
+                  fontWeight: '600',
+                  borderRadius: '4px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  backgroundColor: forceMode === 'local' ? currentTheme.accent : 'transparent',
+                  color: forceMode === 'local' ? 'white' : currentTheme.textSecondary
+                }}
+              >
+                Local
+              </button>
+              <button 
+                onClick={() => setForceMode('ai')}
+                style={{
+                  padding: '4px 8px',
+                  fontSize: '12px',
+                  fontWeight: '600',
+                  borderRadius: '4px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  backgroundColor: forceMode === 'ai' ? currentTheme.accent : 'transparent',
+                  color: forceMode === 'ai' ? 'white' : currentTheme.textSecondary
+                }}
+              >
+                AI
+              </button>
+            </div>
+          </div>
+
+          {/* Theme Toggle */}
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            padding: '10px',
+            borderRadius: '8px'
+          }}>
+            <span style={{ fontSize: '14px', fontWeight: '500', color: currentTheme.text }}>Theme</span>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              backgroundColor: currentTheme.buttonBg,
+              padding: '4px',
+              borderRadius: '6px',
+              border: `1px solid ${currentTheme.border}`
+            }}>
+              <button 
+                onClick={() => setIsDarkMode(false)}
+                style={{
+                  padding: '4px 8px',
+                  fontSize: '12px',
+                  fontWeight: '600',
+                  borderRadius: '4px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  backgroundColor: !isDarkMode ? currentTheme.accent : 'transparent',
+                  color: !isDarkMode ? 'white' : currentTheme.textSecondary,
+                  display: 'flex',
+                  alignItems: 'center'
+                }}
+              >
+                <Icon name="Sun" size={14} />
+              </button>
+              <button 
+                onClick={() => setIsDarkMode(true)}
+                style={{
+                  padding: '4px 8px',
+                  fontSize: '12px',
+                  fontWeight: '600',
+                  borderRadius: '4px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  backgroundColor: isDarkMode ? currentTheme.accent : 'transparent',
+                  color: isDarkMode ? 'white' : currentTheme.textSecondary,
+                  display: 'flex',
+                  alignItems: 'center'
+                }}
+              >
+                <Icon name="Moon" size={14} />
+              </button>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      {/* Main Chat Area */}
+      <main style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+        
+        {/* Header */}
+        <header style={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'space-between', 
+          padding: '16px 24px', 
+          borderBottom: `1px solid ${currentTheme.border}`,
+          backgroundColor: currentTheme.cardBg,
+          backdropFilter: 'blur(8px)',
+          WebkitBackdropFilter: 'blur(8px)'
+        }}>
+          <button 
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: currentTheme.textSecondary,
+              cursor: 'pointer',
+              padding: '8px',
+              borderRadius: '4px',
+              display: 'none'
+            }}
+          >
+            <Icon name="Menu" size={20} />
+          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '18px' }}>{currentProduct.icon}</span>
+            <h2 style={{ 
+              fontSize: '18px', 
+              fontWeight: '600',
+              color: currentTheme.text,
+              margin: 0
+            }}>
+              {currentProduct.title}
+            </h2>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <span style={{ fontSize: '14px', color: currentTheme.textSecondary }}>
+              AI Enhanced - {currentProduct.description}
+            </span>
+          </div>
+        </header>
 
         {/* Chat Messages */}
         <div style={{ 
-          flex: 1,
-          overflow: 'auto', 
-          padding: '24px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '16px'
+          flex: 1, 
+          display: 'flex', 
+          flexDirection: 'column', 
+          alignItems: 'center', 
+          overflowY: 'auto',
+          padding: '0'
         }}>
-          {messages.map((message, index) => (
-            <div key={index} style={{ 
-              display: 'flex', 
-              justifyContent: message.role === 'user' ? 'flex-end' : 'flex-start',
-              width: '100%'
-            }}>
-              <div style={{ 
-                maxWidth: '75%',
-                padding: '12px 16px',
-                borderRadius: '12px',
-                backgroundColor: message.role === 'user' ? '#3b82f6' : currentTheme.cardBg,
-                border: message.role === 'assistant' ? `1px solid ${currentTheme.border}` : 'none',
-                color: message.role === 'user' ? 'white' : currentTheme.text
-              }}>
-                {message.role === 'assistant' && message.source !== 'system' && (
-                  <div style={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    gap: '8px', 
-                    marginBottom: '8px',
-                    fontSize: '12px',
-                    color: currentTheme.textSecondary
-                  }}>
-                    🤖 Assistant
-                    {getSourceBadge(message.source)}
-                  </div>
-                )}
-                <div style={{ 
-                  fontSize: '14px', 
-                  lineHeight: '1.5'
+          <div style={{ width: '100%', maxWidth: '1024px', padding: '24px', flex: 1 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+              
+              {/* Welcome Message */}
+              {messages.length === 1 && (
+                <div style={{
+                  border: `1px solid ${currentTheme.border}`,
+                  borderRadius: '12px',
+                  padding: '24px',
+                  backgroundColor: currentTheme.cardBg,
+                  backdropFilter: 'blur(8px)',
+                  WebkitBackdropFilter: 'blur(8px)'
                 }}>
-                  {formatMessage(message.content)}
+                  <h3 style={{ 
+                    fontSize: '20px', 
+                    fontWeight: '700', 
+                    color: currentTheme.text, 
+                    marginBottom: '8px',
+                    margin: '0 0 8px 0'
+                  }}>
+                    Welcome to TriTech Enterprise Assistant
+                  </h3>
+                  <p style={{ 
+                    color: currentTheme.textSecondary,
+                    lineHeight: '1.6',
+                    margin: 0
+                  }}>
+                    I'm your intelligent assistant for the Premium Pro Enterprise workbook with hybrid AI capabilities. I can handle both simple queries locally and complex analysis using advanced AI. Select a product and ask me anything about TriTech Enterprise!
+                  </p>
                 </div>
-              </div>
-            </div>
-          ))}
-          
-          {isLoading && (
-            <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
-              <div style={{ 
-                padding: '12px 16px',
-                borderRadius: '12px',
-                backgroundColor: currentTheme.cardBg,
-                border: `1px solid ${currentTheme.border}`
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <div style={{ 
-                    width: '8px', 
-                    height: '8px', 
-                    borderRadius: '50%', 
-                    backgroundColor: '#3b82f6',
-                    animation: 'pulse 1.5s ease-in-out infinite'
-                  }}></div>
-                  <div style={{ 
-                    width: '8px', 
-                    height: '8px', 
-                    borderRadius: '50%', 
-                    backgroundColor: '#3b82f6',
-                    animation: 'pulse 1.5s ease-in-out infinite 0.2s'
-                  }}></div>
-                  <div style={{ 
-                    width: '8px', 
-                    height: '8px', 
-                    borderRadius: '50%', 
-                    backgroundColor: '#3b82f6',
-                    animation: 'pulse 1.5s ease-in-out infinite 0.4s'
-                  }}></div>
-                  <span style={{ fontSize: '12px', color: currentTheme.textSecondary, marginLeft: '8px' }}>
-                    {forceMode === 'ai' ? 'AI thinking...' : 'Searching locally...'}
-                  </span>
+              )}
+
+              {/* Chat Messages */}
+              {messages.slice(1).map((message, index) => (
+                <div key={index} style={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: '16px',
+                  justifyContent: message.role === 'user' ? 'flex-end' : 'flex-start'
+                }}>
+                  {message.role === 'assistant' && (
+                    <div style={{
+                      width: '36px',
+                      height: '36px',
+                      backgroundColor: currentTheme.buttonBg,
+                      borderRadius: '50%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0
+                    }}>
+                      <Icon name="Bot" size={18} color={currentTheme.textSecondary} />
+                    </div>
+                  )}
+                  
+                  <div style={{
+                    borderRadius: '12px',
+                    padding: '16px',
+                    maxWidth: '512px',
+                    backgroundColor: message.role === 'user' ? currentTheme.accent : currentTheme.buttonBg,
+                    color: message.role === 'user' ? 'white' : currentTheme.text,
+                    borderTopLeftRadius: message.role === 'assistant' ? '4px' : '12px',
+                    borderTopRightRadius: message.role === 'user' ? '4px' : '12px'
+                  }}>
+                    <div>{formatMessage(message.content)}</div>
+                    
+                    {message.role === 'assistant' && message.source && (
+                      <div style={{ 
+                        marginTop: '12px', 
+                        paddingTop: '12px', 
+                        borderTop: `1px solid ${currentTheme.border}` 
+                      }}>
+                        {getSourceBadge(message.source)}
+                      </div>
+                    )}
+                  </div>
+
+                  {message.role === 'user' && (
+                    <div style={{
+                      width: '36px',
+                      height: '36px',
+                      backgroundColor: currentTheme.buttonBg,
+                      borderRadius: '50%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0
+                    }}>
+                      <Icon name="User" size={18} color={currentTheme.textSecondary} />
+                    </div>
+                  )}
                 </div>
-              </div>
+              ))}
+
+              {/* Sample Questions for Welcome State */}
+              {messages.length === 1 && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  <p style={{ 
+                    fontWeight: '500', 
+                    color: currentTheme.text, 
+                    marginBottom: '8px',
+                    margin: '0 0 8px 0'
+                  }}>
+                    Try asking about:
+                  </p>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                    {currentProduct.questions.slice(0, 3).map((question, index) => (
+                      <button
+                        key={index}
+                        onClick={(e) => handleSubmit(e, question)}
+                        style={{
+                          backgroundColor: isDarkMode ? 'rgba(55, 65, 81, 0.5)' : 'rgba(209, 213, 219, 0.8)',
+                          border: 'none',
+                          borderRadius: '8px',
+                          padding: '6px 12px',
+                          fontSize: '14px',
+                          color: currentTheme.text,
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.target.style.backgroundColor = currentTheme.buttonHover;
+                        }}
+                        onMouseLeave={(e) => {
+                          e.target.style.backgroundColor = isDarkMode ? 'rgba(55, 65, 81, 0.5)' : 'rgba(209, 213, 219, 0.8)';
+                        }}
+                      >
+                        "{question}"
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Loading indicator */}
+              {isLoading && (
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: '16px'
+                }}>
+                  <div style={{
+                    width: '36px',
+                    height: '36px',
+                    backgroundColor: currentTheme.buttonBg,
+                    borderRadius: '50%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0
+                  }}>
+                    <Icon name="Bot" size={18} color={currentTheme.textSecondary} />
+                  </div>
+                  <div style={{
+                    backgroundColor: currentTheme.buttonBg,
+                    borderRadius: '12px',
+                    borderTopLeftRadius: '4px',
+                    padding: '16px',
+                    maxWidth: '512px'
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: currentTheme.textSecondary }}>
+                      <div style={{ display: 'flex', gap: '4px' }}>
+                        {[0, 1, 2].map((i) => (
+                          <div
+                            key={i}
+                            style={{
+                              width: '8px',
+                              height: '8px',
+                              backgroundColor: currentTheme.textMuted,
+                              borderRadius: '50%',
+                              animation: `pulse 1.4s ease-in-out ${i * 0.16}s infinite`
+                            }}
+                          />
+                        ))}
+                      </div>
+                      <span style={{ marginLeft: '8px' }}>Thinking...</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div ref={messagesEndRef} />
             </div>
-          )}
-          <div ref={messagesEndRef} />
+          </div>
         </div>
 
-        {/* Input Area */}
+        {/* Chat Input */}
         <div style={{ 
-          padding: '24px',
-          borderTop: `1px solid ${currentTheme.border}`,
-          backgroundColor: currentTheme.cardBg
+          width: '100%', 
+          maxWidth: '1024px', 
+          margin: '0 auto', 
+          padding: '24px 24px 24px 24px' 
         }}>
-          <form onSubmit={handleSubmit} style={{ display: 'flex', gap: '12px' }}>
+          <form onSubmit={handleSubmit} style={{ position: 'relative' }}>
             <textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
@@ -605,47 +839,98 @@ export default function TriTechAssistant() {
                   handleSubmit(e);
                 }
               }}
-              placeholder={`Ask me anything about ${products[selectedProduct].title}...`}
+              rows="1"
               style={{
-                flex: 1,
-                padding: '12px 16px',
-                borderRadius: '12px',
-                border: `1px solid ${currentTheme.inputBorder}`,
+                width: '100%',
                 backgroundColor: currentTheme.inputBg,
-                color: currentTheme.text,
-                fontSize: '14px',
+                border: `1px solid ${currentTheme.inputBorder}`,
+                borderRadius: '12px',
                 resize: 'none',
-                minHeight: '48px',
-                maxHeight: '120px',
-                outline: 'none'
+                padding: '16px 24px 16px 20px',
+                paddingRight: '64px',
+                color: currentTheme.text,
+                fontSize: '16px',
+                lineHeight: '1.5',
+                outline: 'none',
+                minHeight: '56px',
+                maxHeight: '200px',
+                fontFamily: 'inherit',
+                transition: 'border-color 0.2s ease, box-shadow 0.2s ease'
               }}
-              rows={1}
+              placeholder={`Ask me anything about ${currentProduct.title}...`}
+              disabled={isLoading}
+              onFocus={(e) => {
+                e.target.style.borderColor = currentTheme.accent;
+                e.target.style.boxShadow = `0 0 0 3px ${currentTheme.accent}20`;
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = currentTheme.inputBorder;
+                e.target.style.boxShadow = 'none';
+              }}
+              onInput={(e) => {
+                e.target.style.height = 'auto';
+                e.target.style.height = e.target.scrollHeight + 'px';
+              }}
             />
             <button
               type="submit"
               disabled={isLoading || !input.trim()}
               style={{
-                padding: '12px 24px',
-                borderRadius: '12px',
+                position: 'absolute',
+                right: '12px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                backgroundColor: currentTheme.accent,
                 border: 'none',
-                backgroundColor: isLoading || !input.trim() ? currentTheme.textMuted : '#3b82f6',
-                color: 'white',
-                fontSize: '14px',
-                fontWeight: '500',
+                borderRadius: '8px',
+                padding: '12px',
                 cursor: isLoading || !input.trim() ? 'not-allowed' : 'pointer',
-                transition: 'all 0.2s ease'
+                transition: 'all 0.2s ease',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                opacity: isLoading || !input.trim() ? 0.5 : 1
+              }}
+              onMouseEnter={(e) => {
+                if (!isLoading && input.trim()) {
+                  e.target.style.backgroundColor = currentTheme.accentHover;
+                }
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.backgroundColor = currentTheme.accent;
               }}
             >
-              Send
+              <Icon name="Send" size={18} color="white" />
             </button>
           </form>
         </div>
-      </div>
+      </main>
 
+      {/* Add CSS animations */}
       <style jsx>{`
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        
         @keyframes pulse {
-          0%, 100% { opacity: 0.4; }
-          50% { opacity: 1; }
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.5; }
+        }
+        
+        /* Scrollbar styles */
+        ::-webkit-scrollbar {
+          width: 6px;
+        }
+        
+        ::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+          background: ${currentTheme.textMuted};
+          border-radius: 3px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+          background: ${currentTheme.textSecondary};
         }
       `}</style>
     </div>
