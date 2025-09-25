@@ -14,7 +14,7 @@ export default function TriTechAssistant() {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [forceMode, setForceMode] = useState('ai'); // 'local', 'ai'
-  const [selectedProduct, setSelectedProduct] = useState('Premium');
+  const [selectedProduct, setSelectedProduct] = useState('Premium Tax');
   const [apiStatus, setApiStatus] = useState('checking');
   const [isDarkMode, setIsDarkMode] = useState(true); // Theme state
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -28,7 +28,7 @@ export default function TriTechAssistant() {
   const messagesEndRef = useRef(null);
 
   const products = {
-    'Premium': {
+    'Premium Tax': {
       icon: '💰',
       title: 'Premium Tax',
       description: 'Annual & estimate returns',
