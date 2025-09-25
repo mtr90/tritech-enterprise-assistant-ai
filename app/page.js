@@ -250,20 +250,77 @@ ${originalResponse.split('\n')[0] || 'Issue analysis in progress...'}
     return bugAnalysis;
   };
 
-  const formatUserStory = (originalResponse, title) => {
-    const userStory = `As a user, I want ${originalResponse.toLowerCase().replace(/^i want to |^i need to |^i would like to /i, '')}, so that I can achieve my goals efficiently.
+  const formatUserStory = (originalResponse, userInput) => {
+    // Extract the core feature from user input
+    let featureRequest = userInput.toLowerCase();
+    
+    // Clean up common phrases to get to the core feature
+    featureRequest = featureRequest
+      .replace(/^i need to |^i want to |^i would like to |^we need to |^can you |^please /i, '')
+      .replace(/^add |^create |^implement |^build /i, '')
+      .trim();
+    
+    // Generate contextual user story based on the AI response and user input
+    const userStory = `As a user, I want ${featureRequest}, so that I can ${originalResponse.toLowerCase().includes('download') ? 'easily download files when needed' : 
+      originalResponse.toLowerCase().includes('search') ? 'quickly find the information I need' :
+      originalResponse.toLowerCase().includes('save') ? 'preserve my work and data' :
+      originalResponse.toLowerCase().includes('edit') ? 'modify content as required' :
+      originalResponse.toLowerCase().includes('view') ? 'access and review information' :
+      originalResponse.toLowerCase().includes('upload') ? 'share files with the system' :
+      originalResponse.toLowerCase().includes('delete') ? 'remove unwanted items' :
+      originalResponse.toLowerCase().includes('print') ? 'create physical copies of documents' :
+      'accomplish my tasks efficiently'}.
 
 Acceptance Criteria:
-• When I interact with the system, it should respond appropriately
-• The feature should be intuitive and easy to use
-• The system should provide clear feedback on actions
-• Error handling should be graceful and informative
-• The feature should work consistently across different scenarios
-• The interface should be accessible and user-friendly
-• The feature should integrate seamlessly with existing functionality
-• Performance should meet expected response time standards`;
+${generateAcceptanceCriteria(featureRequest, originalResponse)}`;
 
     return userStory;
+  };
+
+  const generateAcceptanceCriteria = (featureRequest, aiResponse) => {
+    // Generate specific acceptance criteria based on the feature type
+    if (featureRequest.includes('button') || featureRequest.includes('pdf download')) {
+      return `• The button should be clearly visible and accessible in the interface
+• Clicking the button should trigger the download immediately
+• The button should be properly labeled (e.g., "Download PDF")
+• The button should be disabled when no content is available to download
+• The download should work across different browsers
+• Users should receive feedback when the download starts
+• The downloaded file should have a meaningful filename
+• The button should follow the existing UI design patterns`;
+    }
+    
+    if (featureRequest.includes('search') || featureRequest.includes('filter')) {
+      return `• The search functionality should be easily accessible
+• Search results should be displayed clearly and quickly
+• Users should be able to search by relevant criteria
+• The search should handle partial matches and typos gracefully
+• Search results should be sortable and filterable
+• Users should be able to clear search results easily
+• The search should provide feedback for no results found
+• Search history or suggestions should be available when appropriate`;
+    }
+    
+    if (featureRequest.includes('form') || featureRequest.includes('input')) {
+      return `• The form should have clear labels for all fields
+• Required fields should be clearly marked
+• Form validation should provide helpful error messages
+• Users should be able to save progress or drafts
+• The form should be accessible via keyboard navigation
+• Confirmation should be provided upon successful submission
+• Users should be able to edit submitted information if needed
+• The form should work consistently across different devices`;
+    }
+    
+    // Default acceptance criteria for other features
+    return `• The feature should be intuitive and easy to use
+• Users should receive clear feedback on their actions
+• The feature should work consistently across different scenarios
+• Error handling should be graceful and informative
+• The feature should integrate seamlessly with existing functionality
+• Performance should meet expected response time standards
+• The feature should be accessible to users with disabilities
+• The feature should work across different browsers and devices`;
   };
 
   const formatBugReport = (originalResponse, title) => {
