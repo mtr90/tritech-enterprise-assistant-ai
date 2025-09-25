@@ -251,13 +251,9 @@ ${originalResponse.split('\n')[0] || 'Issue analysis in progress...'}
   };
 
   const formatUserStory = (originalResponse, title) => {
-    const cleanTitle = title || 'Feature Request';
-    
-    const userStory = `**${cleanTitle}:**
+    const userStory = `As a user, I want ${originalResponse.toLowerCase().replace(/^i want to |^i need to |^i would like to /i, '')}, so that I can achieve my goals efficiently.
 
-**User Story:** As a user, I want ${originalResponse.toLowerCase().replace(/^i want to |^i need to |^i would like to /i, '')}, so that I can achieve my goals efficiently.
-
-**Acceptance Criteria:**
+Acceptance Criteria:
 • When I interact with the system, it should respond appropriately
 • The feature should be intuitive and easy to use
 • The system should provide clear feedback on actions
@@ -271,15 +267,10 @@ ${originalResponse.split('\n')[0] || 'Issue analysis in progress...'}
   };
 
   const formatBugReport = (originalResponse, title) => {
-    const cleanTitle = title || 'Bug Report';
-    
-    const bugReport = `**${cleanTitle}**
-
-**Root Cause Analysis:**
+    const bugReport = `Root Cause Analysis:
 ${originalResponse}
 
-**AI Recommendations:**
-Based on the analysis above, here are the suggested actions to resolve this issue:
+Suggestions to Fix:
 • Investigate the specific component or module mentioned
 • Check recent changes or updates that might have caused this issue
 • Verify configuration settings and data integrity
