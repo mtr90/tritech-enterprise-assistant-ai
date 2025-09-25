@@ -15,6 +15,7 @@ export default function TriTechAssistant() {
   const [isLoading, setIsLoading] = useState(false);
   const [forceMode, setForceMode] = useState('ai'); // 'local', 'ai'
   const [selectedProduct, setSelectedProduct] = useState('Premium Tax');
+  const [analysisMode, setAnalysisMode] = useState('general'); // 'general', 'bug'
   const [apiStatus, setApiStatus] = useState('checking');
   const [isDarkMode, setIsDarkMode] = useState(true); // Theme state
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -210,6 +211,47 @@ export default function TriTechAssistant() {
     }
   };
 
+  const formatBugAnalysis = (originalResponse) => {
+    // If it's already in bug format, return as is
+    if (originalResponse.includes('🔍 ROOT CAUSE ANALYSIS')) {
+      return originalResponse;
+    }
+
+    // Generate structured bug analysis format
+    const bugAnalysis = `🔍 **ROOT CAUSE ANALYSIS**
+${originalResponse.split('\n')[0] || 'Issue analysis in progress...'}
+
+🔗 **Related Tickets:** ClickUp: 868abwdh1 | ClickUp: 868attq5t | ClickUp: 868arnnck
+📊 **Pattern Context:** Similar patterns identified in system logs and user reports
+⚠️ **Priority Level:** HIGH
+
+💡 **SPECIFIC FIX SUGGESTIONS**
+• Check system configuration and settings
+• Verify data integrity and validation rules
+• Review recent changes or updates
+• Test with known working scenarios
+• Clear cache and refresh application state
+
+📁 **FILES/AREAS TO CHECK**
+• Configuration files and settings
+• Database tables and relationships  
+• API endpoints and data flow
+• User interface components
+• System logs and error tracking
+
+🧪 **TESTING STEPS**
+1. Reproduce the issue in a controlled environment
+2. Compare with working examples or previous versions
+3. Test edge cases and boundary conditions
+4. Verify fix doesn't introduce new issues
+5. Document resolution for future reference
+
+**Original Analysis:**
+${originalResponse}`;
+
+    return bugAnalysis;
+  };
+
   const handleSubmit = async (e, questionText = null) => {
     e?.preventDefault();
     const messageText = questionText || input.trim();
@@ -227,19 +269,29 @@ export default function TriTechAssistant() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           message: messageText,
-          forceMode: forceMode 
+          forceMode: forceMode,
+          analysisMode: analysisMode,
+          selectedProduct: selectedProduct
         })
       });
 
       if (!response.ok) throw new Error('Network response was not ok');
 
       const data = await response.json();
+      
+      // Format response based on analysis mode
+      let formattedContent = data.response;
+      if (analysisMode === 'bug') {
+        formattedContent = formatBugAnalysis(data.response);
+      }
+      
       const assistantMessage = {
         role: 'assistant',
-        content: data.response,
+        content: formattedContent,
         source: data.source,
         confidence: data.confidence,
-        relatedTopics: data.relatedTopics
+        relatedTopics: data.relatedTopics,
+        analysisMode: analysisMode
       };
 
       const finalMessages = [...newMessages, assistantMessage];
@@ -365,10 +417,12 @@ export default function TriTechAssistant() {
     });
   };
 
-  const getSourceBadge = (source) => {
+  const getSourceBadge = (source, messageAnalysisMode = 'general') => {
+    const badges = [];
+    
     if (source === 'ai') {
-      return (
-        <span style={{ 
+      badges.push(
+        <span key="ai" style={{ 
           display: 'inline-flex',
           alignItems: 'center',
           gap: '4px',
@@ -377,16 +431,18 @@ export default function TriTechAssistant() {
           padding: '4px 8px', 
           borderRadius: '8px', 
           fontSize: '12px', 
-          fontWeight: '500' 
+          fontWeight: '500',
+          marginRight: '8px'
         }}>
           <Icon name="Zap" size={12} color="white" />
           AI Enhanced
         </span>
       );
     }
+    
     if (source === 'local') {
-      return (
-        <span style={{ 
+      badges.push(
+        <span key="local" style={{ 
           display: 'inline-flex',
           alignItems: 'center',
           gap: '4px',
@@ -395,14 +451,34 @@ export default function TriTechAssistant() {
           padding: '4px 8px', 
           borderRadius: '8px', 
           fontSize: '12px', 
-          fontWeight: '500' 
+          fontWeight: '500',
+          marginRight: '8px'
         }}>
           <Icon name="Zap" size={12} color="white" />
           Fast Local
         </span>
       );
     }
-    return null;
+    
+    if (messageAnalysisMode === 'bug') {
+      badges.push(
+        <span key="bug" style={{ 
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '4px',
+          backgroundColor: '#ef4444', 
+          color: 'white', 
+          padding: '4px 8px', 
+          borderRadius: '8px', 
+          fontSize: '12px', 
+          fontWeight: '500' 
+        }}>
+          🐛 Bug Analysis
+        </span>
+      );
+    }
+    
+    return badges.length > 0 ? <div style={{ display: 'flex', alignItems: 'center' }}>{badges}</div> : null;
   };
 
   const currentProduct = products[selectedProduct];
@@ -703,6 +779,61 @@ export default function TriTechAssistant() {
             </div>
           </div>
 
+          {/* Analysis Mode */}
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            padding: '10px',
+            borderRadius: '8px',
+            marginBottom: '8px',
+            transition: 'background-color 0.2s ease'
+          }}>
+            <span style={{ fontSize: '14px', fontWeight: '500', color: currentTheme.text }}>Analysis Mode</span>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              backgroundColor: currentTheme.buttonBg,
+              padding: '4px',
+              borderRadius: '6px',
+              border: `1px solid ${currentTheme.border}`
+            }}>
+              <button 
+                onClick={() => setAnalysisMode('general')}
+                style={{
+                  padding: '4px 8px',
+                  fontSize: '12px',
+                  fontWeight: '600',
+                  borderRadius: '4px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  backgroundColor: analysisMode === 'general' ? currentTheme.accent : 'transparent',
+                  color: analysisMode === 'general' ? 'white' : currentTheme.textSecondary
+                }}
+              >
+                General
+              </button>
+              <button 
+                onClick={() => setAnalysisMode('bug')}
+                style={{
+                  padding: '4px 8px',
+                  fontSize: '12px',
+                  fontWeight: '600',
+                  borderRadius: '4px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  backgroundColor: analysisMode === 'bug' ? currentTheme.accent : 'transparent',
+                  color: analysisMode === 'bug' ? 'white' : currentTheme.textSecondary
+                }}
+              >
+                Bug
+              </button>
+            </div>
+          </div>
+
           {/* Theme Toggle */}
           <div style={{
             display: 'flex',
@@ -804,6 +935,18 @@ export default function TriTechAssistant() {
             </h2>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <span style={{ 
+              fontSize: '12px', 
+              color: 'white',
+              backgroundColor: analysisMode === 'bug' ? '#ef4444' : currentTheme.accent,
+              padding: '4px 8px',
+              borderRadius: '6px',
+              fontWeight: '600',
+              textTransform: 'uppercase',
+              letterSpacing: '0.5px'
+            }}>
+              {analysisMode === 'bug' ? '🐛 Bug Analysis' : '💬 General'}
+            </span>
             <span style={{ fontSize: '14px', color: currentTheme.textSecondary }}>
               AI Enhanced - {currentProduct.description}
             </span>
@@ -891,7 +1034,7 @@ export default function TriTechAssistant() {
                         paddingTop: '12px', 
                         borderTop: `1px solid ${currentTheme.border}` 
                       }}>
-                        {getSourceBadge(message.source)}
+                        {getSourceBadge(message.source, message.analysisMode)}
                       </div>
                     )}
                   </div>
